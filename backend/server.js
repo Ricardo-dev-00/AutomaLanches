@@ -26,31 +26,27 @@ const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');
 
-// Função para ler o contador de pedidos
-function getOrderNumber() {
+// Função para gerar número do pedido único baseado em timestamp
+function generateOrderNumber() {
   try {
+    // Se o arquivo existe, usar o valor persistido + incrementar
     if (fs.existsSync(ORDER_COUNTER_FILE)) {
       const data = fs.readFileSync(ORDER_COUNTER_FILE, 'utf8');
-      const { counter } = JSON.parse(data);
-      return counter;
+      const { baseNumber } = JSON.parse(data);
+      const currentNumber = baseNumber + 1;
+      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ baseNumber: currentNumber }));
+      return currentNumber;
+    } else {
+      // Primeira vez: usar timestamp como base (últimos 6 dígitos do timestamp + sequencial)
+      const timestamp = Math.floor(Date.now() / 1000);
+      const baseNumber = parseInt(String(timestamp).slice(-6)) * 100; // Espaço para 100 pedidos por segundo
+      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ baseNumber }));
+      return baseNumber;
     }
-    return 0;
   } catch (error) {
-    console.error('Erro ao ler contador de pedidos:', error);
-    return 0;
-  }
-}
-
-// Função para incrementar e salvar o contador
-function incrementOrderNumber() {
-  try {
-    const currentNumber = getOrderNumber();
-    const newNumber = currentNumber + 1;
-    fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ counter: newNumber }));
-    return newNumber;
-  } catch (error) {
-    console.error('Erro ao incrementar contador:', error);
-    return 1;
+    console.error('Erro ao gerar número do pedido:', error);
+    // Fallback: gerar um número aleatório grande se tudo falhar
+    return Math.floor(Math.random() * 900000) + 100000;
   }
 }
 
@@ -90,8 +86,8 @@ app.post('/api/send-order', async (req, res) => {
   try {
     const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor } = req.body;
     
-    // Gerar número do pedido
-    const orderNumber = incrementOrderNumber();
+    // Gerar número do pedido único
+    const orderNumber = generateOrderNumber();
     
     // Formatar lista de itens
     const itemsList = items.map(item => {
