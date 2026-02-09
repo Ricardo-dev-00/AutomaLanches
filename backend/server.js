@@ -81,13 +81,37 @@ app.post('/api/generate-pix', (req, res) => {
   }
 });
 
+// Função para sanitizar número de WhatsApp
+function sanitizeWhatsAppNumber(phone) {
+  // Remove todos os caracteres não numéricos
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Se começar com 0, remove
+  if (cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1);
+  }
+  
+  // Se não tiver código do país (55), adiciona
+  if (!cleaned.startsWith('55')) {
+    cleaned = '55' + cleaned;
+  }
+  
+  return cleaned;
+}
+
 // Rota para enviar pedido ao Telegram
 app.post('/api/send-order', async (req, res) => {
   try {
+    console.log('PEDIDO RECEBIDO');
     const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor } = req.body;
+    
+    // Sanitizar número de WhatsApp
+    const whatsappSanitized = sanitizeWhatsAppNumber(whatsapp);
+    console.log('WHATSAPP SANITIZADO:', whatsappSanitized);
     
     // Gerar número do pedido único
     const orderNumber = generateOrderNumber();
+    console.log('NUMERO DO PEDIDO:', orderNumber);
     
     // Formatar lista de itens
     const itemsList = items.map(item => {
@@ -149,8 +173,56 @@ ${addressText}
 💳 *Pagamento:* ${paymentMethodText}${paymentStatus}${changeText}
     `.trim();
     
-    // Enviar mensagem para o Telegram
-    await bot.sendMessage(CHAT_ID, message, { parse_mode: 'Markdown' });
+    // Criar mensagens para WhatsApp (URL encoded)
+    const msgEmPreparo = encodeURIComponent(
+      `Olá ${name}! 🍔\n\nSeu pedido #${orderNumber} foi recebido e já está em preparo.\nEm breve avisaremos quando ${deliveryType === 'delivery' ? 'sair para entrega' : 'estiver pronto para retirada'}.\n\nObrigado pela preferência 🙏`
+    );
+    
+    const msgSaiuEntrega = encodeURIComponent(
+      `Olá ${name}! 🚴‍♂️\n\nSeu pedido #${orderNumber} acabou de sair para entrega!\nEm breve chegará até você.\n\nQualquer dúvida, estamos à disposição 😊`
+    );
+    
+    const msgProntoRetirada = encodeURIComponent(
+      `Olá ${name}! 🏪\n\nSeu pedido #${orderNumber} já está pronto para retirada.\nPode vir buscar quando quiser 😉\n\nObrigado!`
+    );
+    
+    // Criar inline keyboard com botões de status
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: '🍳 Pedido em preparo',
+            url: `https://wa.me/${whatsappSanitized}?text=${msgEmPreparo}`
+          }
+        ]
+      ]
+    };
+    
+    // Adicionar segundo botão de acordo com tipo de entrega
+    if (deliveryType === 'delivery') {
+      inlineKeyboard.inline_keyboard.push([
+        {
+          text: '🚴 Saiu para entrega',
+          url: `https://wa.me/${whatsappSanitized}?text=${msgSaiuEntrega}`
+        }
+      ]);
+    } else {
+      inlineKeyboard.inline_keyboard.push([
+        {
+          text: '🏪 Pronto para retirada',
+          url: `https://wa.me/${whatsappSanitized}?text=${msgProntoRetirada}`
+        }
+      ]);
+    }
+    
+    console.log('BOTOES OK');
+    console.log('TIPO:', deliveryType);
+    console.log('ENVIANDO...');
+    await bot.sendMessage(CHAT_ID, message, { 
+      parse_mode: 'Markdown',
+      reply_markup: inlineKeyboard
+    });
+    console.log('BOTOES ENVIADOS');
     
     res.json({ 
       success: true, 

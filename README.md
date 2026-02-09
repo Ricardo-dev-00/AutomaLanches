@@ -195,6 +195,81 @@ npm run dev      # Desenvolvimento com watch mode
 2. Deploy direto da pasta `backend/`
 3. Certifique-se de que a porta está correta
 
+## 🤖 Atualização de Status via Telegram Bot
+
+Sistema inteligente de **atualização de status de pedidos** integrado ao Telegram, permitindo comunicação rápida e direta com o cliente via WhatsApp **sem custos com APIs pagas**.
+
+### Como Funciona
+
+1. **Pedido chega no Telegram** - Mensagem completa com todos os dados
+2. **Botões interativos aparecem** - Logo abaixo da mensagem do pedido
+3. **Atendente escolhe o status** - Clica no botão correspondente
+4. **WhatsApp abre automaticamente** - Com mensagem já preenchida
+5. **Apenas confirma o envio** - Cliente recebe atualização instantânea
+
+### 🔘 Botões Disponíveis
+
+Cada pedido possui **botões inline** (clicáveis) que se adaptam ao tipo de entrega:
+
+#### Para Delivery 🚚
+- **🍳 Pedido em preparo** - Avisa que o pedido foi recebido e está sendo preparado
+- **🚴 Saiu para entrega** - Notifica que o entregador já saiu com o pedido
+
+#### Para Retirada 🏪
+- **🍳 Pedido em preparo** - Avisa que o pedido foi recebido e está sendo preparado
+- **🏪 Pronto para retirada** - Notifica que o pedido está pronto para buscar
+
+### 💬 Mensagens Automáticas
+
+As mensagens são **personalizadas** com o nome do cliente e número do pedido:
+
+**Pedido em preparo:**
+```
+Olá [Nome do Cliente]! 🍔
+
+Seu pedido #[Número] foi recebido e já está em preparo.
+Em breve avisaremos quando sair para entrega.
+
+Obrigado pela preferência 🙏
+```
+
+**Saiu para entrega:**
+```
+Olá [Nome do Cliente]! 🚴‍♂️
+
+Seu pedido #[Número] acabou de sair para entrega!
+Em breve chegará até você.
+
+Qualquer dúvida, estamos à disposição 😊
+```
+
+**Pronto para retirada:**
+```
+Olá [Nome do Cliente]! 🏪
+
+Seu pedido #[Número] já está pronto para retirada.
+Pode vir buscar quando quiser 😉
+
+Obrigado!
+```
+
+### ✨ Vantagens
+
+- ✅ **Zero custos com APIs** - Usa apenas Telegram Bot gratuito e WhatsApp Web
+- ✅ **Comunicação direta** - Cliente recebe mensagem no WhatsApp dele
+- ✅ **Mensagens prontas** - Economiza tempo do atendente
+- ✅ **Personalizado** - Nome do cliente e número do pedido dinâmicos
+- ✅ **Mobile-friendly** - Botões espaçados para evitar cliques acidentais
+- ✅ **Profissional** - Melhora a experiência do cliente
+
+### 📐 Design Responsivo
+
+Os botões são exibidos **um por linha** para:
+- Evitar cliques acidentais no celular
+- Melhor legibilidade
+- Espaço de toque confortável
+- Interface limpa e organizada
+
 ## 🔮 Melhorias Futuras
 
 - [ ] Painel administrativo

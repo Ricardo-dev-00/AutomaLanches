@@ -21,6 +21,7 @@ const Checkout = ({ onBack, onContinue }) => {
   
   const [deliveryType, setDeliveryType] = useState('');
   const [changeConfirmed, setChangeConfirmed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     whatsapp: '',
@@ -67,13 +68,40 @@ const Checkout = ({ onBack, onContinue }) => {
     localStorage.setItem('automaLanches_customerData', JSON.stringify(dataToSave));
   };
   
+  // Função para formatar WhatsApp
+  const formatWhatsApp = (value) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Aplica a máscara (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    } else if (numbers.length <= 11) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    } else {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    }
+  };
+  
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Se for o campo whatsapp, formata
+    const newValue = name === 'whatsapp' ? formatWhatsApp(value) : value;
+    
     const newData = {
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: newValue
     };
     setFormData(newData);
     saveToLocalStorage(newData);
+    
+    // Limpa mensagem de erro ao digitar
+    if (errorMessage) {
+      setErrorMessage('');
+    }
   };
   
   const handleChangeForInput = (e) => {
@@ -108,6 +136,30 @@ const Checkout = ({ onBack, onContinue }) => {
   
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validar campos obrigatórios
+    if (!formData.name.trim()) {
+      setErrorMessage('Por favor, preencha seu nome completo.');
+      return;
+    }
+    
+    if (!formData.whatsapp.trim()) {
+      setErrorMessage('Por favor, preencha seu número de WhatsApp.');
+      return;
+    }
+    
+    // Verificar se o WhatsApp tem pelo menos 14 caracteres (XX) XXXX-XXXX
+    if (formData.whatsapp.replace(/\D/g, '').length < 10) {
+      setErrorMessage('Por favor, digite um número de WhatsApp válido.');
+      return;
+    }
+    
+    if (!isFormValid()) {
+      setErrorMessage('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    
+    setErrorMessage('');
     onContinue({ deliveryType, ...formData });
   };
   
@@ -189,7 +241,7 @@ const Checkout = ({ onBack, onContinue }) => {
                     placeholder="Nome completo *"
                     value={formData.name}
                     onChange={handleChange}
-                    className="input-field"
+                    className={`input-field ${!formData.name && errorMessage ? 'border-red-500' : ''}`}
                     required
                   />
                   <input
@@ -198,7 +250,9 @@ const Checkout = ({ onBack, onContinue }) => {
                     placeholder="WhatsApp (com DDD) *"
                     value={formData.whatsapp}
                     onChange={handleChange}
-                    className="input-field"
+                    className={`input-field ${!formData.whatsapp && errorMessage ? 'border-red-500' : ''}`}
+                    maxLength="15"
+                    inputMode="numeric"
                     required
                   />
                 </div>
@@ -430,11 +484,17 @@ const Checkout = ({ onBack, onContinue }) => {
                 </div>
               )}
               
+              {/* Mensagem de Erro */}
+              {errorMessage && (
+                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4 text-red-700 font-medium">
+                  ⚠️ {errorMessage}
+                </div>
+              )}
+              
               {/* Botão Continuar */}
               <button
                 type="submit"
-                disabled={!isFormValid()}
-                className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full text-lg"
               >
                 Continuar
               </button>
