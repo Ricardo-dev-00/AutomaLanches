@@ -448,7 +448,7 @@ const Checkout = ({ onBack, onContinue }) => {
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="font-semibold text-textPrimary">AutomaLanches</p>
+                      <p className="font-semibold text-textPrimary">Rei da Chapa</p>
                       <p className="text-textSecondary">Rua Exemplo, 123 - Centro</p>
                       <p className="text-textSecondary">São Luís - MA</p>
                     </div>

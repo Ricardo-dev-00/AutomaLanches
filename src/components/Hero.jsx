@@ -5,11 +5,11 @@ const Hero = () => {
   const lanchoneteWhatsApp = `https://wa.me/${whatsappNumber}`;
   
   return (
-    <section className="mt-16 bg-gradient-to-r from-[#1a8a47] to-[#0a5549] text-white">
+    <section className="mt-16 bg-gradient-to-r from-gray-900 via-black to-gray-800 text-white">
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 drop-shadow-lg">
-            Sabor que Chega até Você! 🍔
+            Onde o sabor reina 👑
           </h2>
           
           <div className="flex flex-wrap justify-center gap-4 text-sm md:text-base mb-6">

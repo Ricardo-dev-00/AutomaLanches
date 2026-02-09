@@ -12,10 +12,10 @@ const Footer = () => {
           {/* Sobre */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl">
-                🍔
+              <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-2xl shadow-lg">
+                👑
               </div>
-              <h3 className="text-xl font-bold">AutomaLanches</h3>
+              <h3 className="text-xl font-bold">Rei da Chapa</h3>
             </div>
             <p className="text-white/80 text-sm">
               Sabor que chega até você! Delivery e retirada no local com os melhores hambúrgueres, pizzas e muito mais.
@@ -96,7 +96,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="border-t border-white/20 pt-6 text-center">
           <p className="text-white/80 text-sm">
-            © {currentYear} AutomaLanches. Todos os direitos reservados.
+            © {currentYear} Rei da Chapa. Todos os direitos reservados.
           </p>
         </div>
       </div>

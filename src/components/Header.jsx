@@ -14,12 +14,12 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo e Nome */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-2xl">
-              🍔
+            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-2xl shadow-lg">
+              👑
             </div>
             <div>
-              <h1 className="text-xl font-bold text-textPrimary">
-                {import.meta.env.VITE_LANCHONETE_NAME || 'AutomaLanches'}
+              <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                Rei da Chapa
               </h1>
               <p className="text-xs text-textSecondary">Delivery & Retirada</p>
             </div>
