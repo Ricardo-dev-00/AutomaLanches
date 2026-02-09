@@ -8,8 +8,8 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
   const [pixCode, setPixCode] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [loading, setLoading] = useState(true);
-  const { getTotal } = useCartStore();
-  const total = getTotal();
+  const { getTotalWithDelivery } = useCartStore();
+  const total = getTotalWithDelivery();
   
   const pixKey = import.meta.env.VITE_PIX_KEY || 'suachavepix@email.com';
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';

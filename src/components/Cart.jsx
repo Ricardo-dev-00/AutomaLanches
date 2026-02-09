@@ -2,9 +2,24 @@ import { FaTimes, FaPlus, FaMinus, FaTrash } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 
 const Cart = ({ onCheckout }) => {
-  const { items, isOpen, closeCart, updateQuantity, removeItem, updateObservation, getTotal } = useCartStore();
+  const {
+    items,
+    isOpen,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    updateObservation,
+    deliveryType,
+    deliveryFee,
+    setDeliveryType,
+    getTotal,
+    getTotalWithDelivery
+  } = useCartStore();
   
-  const total = getTotal();
+  const subtotal = getTotal();
+  const total = getTotalWithDelivery();
+  const minimumOrder = 20;
+  const isMinimumMet = subtotal >= minimumOrder;
   
   if (!isOpen) return null;
   
@@ -102,6 +117,52 @@ const Cart = ({ onCheckout }) => {
         {/* Footer */}
         {items.length > 0 && (
           <div className="border-t p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold mb-2">Entrega ou retirada</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('delivery')}
+                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    deliveryType === 'delivery'
+                      ? 'border-primary bg-card'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Entrega
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('pickup')}
+                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    deliveryType === 'pickup'
+                      ? 'border-primary bg-card'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Retirada
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1 text-sm text-textSecondary">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Frete</span>
+                <span>
+                  {deliveryType === 'delivery'
+                    ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`
+                    : 'gratis'}
+                </span>
+              </div>
+            </div>
+            {!isMinimumMet && (
+              <div className="bg-yellow-50 border-2 border-yellow-300 text-yellow-800 rounded-lg p-3 text-sm">
+                Pedido minimo: R$ 20,00 (sem frete). Faltam R$ {(minimumOrder - subtotal).toFixed(2).replace('.', ',')}.
+              </div>
+            )}
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total:</span>
               <span className="text-2xl font-bold text-primary">
@@ -113,7 +174,8 @@ const Cart = ({ onCheckout }) => {
                 closeCart();
                 onCheckout();
               }}
-              className="btn-primary w-full text-lg"
+              className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isMinimumMet}
             >
               Finalizar Pedido
             </button>

@@ -10,7 +10,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+// Carregar .env do diretório backend
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -169,17 +170,17 @@ ${addressText}
 💳 *Pagamento:* ${paymentMethodText}${paymentStatus}${changeText}
     `.trim();
     
-    // Criar mensagens para WhatsApp (URL encoded)
+    // Criar mensagens para WhatsApp (URL encoded) - CURTAS para não exceder limite de URL
     const msgEmPreparo = encodeURIComponent(
-      `Olá ${name}! 🍔\n\nSeu pedido #${orderNumber} foi recebido e já está em preparo.\nEm breve avisaremos quando ${deliveryType === 'delivery' ? 'sair para entrega' : 'estiver pronto para retirada'}.\n\nObrigado pela preferência 🙏`
+      `Olá ${name}!\n\nSeu pedido #${orderNumber} está em preparo. Em breve avisamos!\n\n👨‍🍳 #ReidaChapa`
     );
     
     const msgSaiuEntrega = encodeURIComponent(
-      `Olá ${name}! 🚴‍♂️\n\nSeu pedido #${orderNumber} acabou de sair para entrega!\nEm breve chegará até você.\n\nQualquer dúvida, estamos à disposição 😊`
+      `Olá ${name}!\n\nSeu pedido #${orderNumber} saiu para entrega!\n\n🚴 Chegando em breve!`
     );
     
     const msgProntoRetirada = encodeURIComponent(
-      `Olá ${name}! 🏪\n\nSeu pedido #${orderNumber} já está pronto para retirada.\nPode vir buscar quando quiser 😉\n\nObrigado!`
+      `Olá ${name}!\n\nSeu pedido #${orderNumber} está pronto!\n\n🏪 Pode vir buscar agora!`
     );
     
     // Criar inline keyboard com botões de status
@@ -214,11 +215,14 @@ ${addressText}
     console.log('BOTOES OK');
     console.log('TIPO:', deliveryType);
     console.log('ENVIANDO...');
+    console.log('CHAT_ID:', CHAT_ID);
+    console.log('BOT_TOKEN_EXISTS:', !!process.env.TELEGRAM_BOT_TOKEN);
+    
     await bot.sendMessage(CHAT_ID, message, { 
       parse_mode: 'Markdown',
       reply_markup: inlineKeyboard
     });
-    console.log('BOTOES ENVIADOS');
+    console.log('✅ PEDIDO ENVIADO COM SUCESSO');
     
     res.json({ 
       success: true, 
@@ -227,7 +231,8 @@ ${addressText}
     });
     
   } catch (error) {
-    console.error('Erro ao enviar pedido:', error);
+    console.error('❌ ERRO COMPLETO:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({ 
       success: false, 
       message: 'Erro ao enviar pedido',

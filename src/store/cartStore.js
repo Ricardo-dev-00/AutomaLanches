@@ -6,6 +6,8 @@ const useCartStore = create(
     (set, get) => ({
       items: [],
       isOpen: false,
+      deliveryType: 'delivery',
+      deliveryFee: 5,
       
       addItem: (product) => {
         const items = get().items;
@@ -56,9 +58,17 @@ const useCartStore = create(
       openCart: () => set({ isOpen: true }),
       
       closeCart: () => set({ isOpen: false }),
+
+      setDeliveryType: (deliveryType) => set({ deliveryType }),
       
       getTotal: () => {
         return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
+      },
+
+      getTotalWithDelivery: () => {
+        const subtotal = get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const fee = get().deliveryType === 'delivery' ? get().deliveryFee : 0;
+        return subtotal + fee;
       },
       
       getItemCount: () => {

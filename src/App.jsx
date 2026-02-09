@@ -20,7 +20,7 @@ function App() {
   const [orderNumber, setOrderNumber] = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, deliveryFee, getTotalWithDelivery, clearCart } = useCartStore();
   
   // Função para resetar para home
   const handleResetToHome = () => {
@@ -43,6 +43,17 @@ function App() {
   const filteredProducts = selectedCategory === 'all' 
     ? products 
     : products.filter(p => p.category === selectedCategory);
+
+  const handleSelectCategory = (categoryId) => {
+    setSelectedCategory(categoryId);
+    requestAnimationFrame(() => {
+      const targetId = categoryId === 'all' ? 'product-list-start' : 'category-title';
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  };
   
   // Ir para checkout
   const handleCheckout = () => {
@@ -86,10 +97,14 @@ function App() {
         needsChange: data.needsChange || false,
         changeFor: data.changeFor || '',
         items: items,
-        total: getTotal()
+        deliveryFee: data.deliveryType === 'delivery' ? deliveryFee : 0,
+        total: getTotalWithDelivery()
       };
       
+      console.log('📦 Enviando pedido:', orderPayload);
+      
       const response = await sendOrderToTelegram(orderPayload);
+      console.log('✅ Resposta do servidor:', response);
       
       if (response.orderNumber) {
         setOrderNumber(response.orderNumber);
@@ -119,11 +134,17 @@ function App() {
           <Hero />
           <CategoryFilter 
             selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+            onSelectCategory={handleSelectCategory}
           />
           
-          <main className="max-w-7xl mx-auto px-4 py-6 mb-20">
-            <ProductList products={filteredProducts} />
+          <main id="product-list-start" className="max-w-7xl mx-auto px-4 py-6 mb-20 scroll-mt-24">
+            {selectedCategory !== 'all' && (
+              <h2 id="category-title" className="text-2xl sm:text-xl font-bold text-textPrimary text-center mb-6 scroll-mt-24">
+                <span className="mr-2">{categories.find(category => category.id === selectedCategory)?.icon}</span>
+                {categories.find(category => category.id === selectedCategory)?.name}
+              </h2>
+            )}
+            <ProductList products={filteredProducts} showCategoryTitles={selectedCategory === 'all'} />
           </main>
 
           <section className="max-w-7xl mx-auto px-4 pb-10">

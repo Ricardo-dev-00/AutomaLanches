@@ -16,10 +16,8 @@ const AVAILABLE_NEIGHBORHOODS = [
 ];
 
 const Checkout = ({ onBack, onContinue }) => {
-  const { getTotal } = useCartStore();
-  const cartTotal = getTotal();
-  
-  const [deliveryType, setDeliveryType] = useState('');
+  const { getTotalWithDelivery, deliveryType, setDeliveryType } = useCartStore();
+  const cartTotal = getTotalWithDelivery();
   const [changeConfirmed, setChangeConfirmed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -197,38 +195,6 @@ const Checkout = ({ onBack, onContinue }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Tipo de Entrega */}
-          <div>
-            <h3 className="font-semibold mb-3 text-lg">Como deseja receber?</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setDeliveryType('delivery')}
-                className={`p-4 border-2 rounded-lg flex flex-col items-center gap-2 transition-all ${
-                  deliveryType === 'delivery'
-                    ? 'border-primary bg-card'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <FaTruck size={24} className={deliveryType === 'delivery' ? 'text-primary' : 'text-gray-400'} />
-                <span className="font-semibold">Entrega</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setDeliveryType('pickup')}
-                className={`p-4 border-2 rounded-lg flex flex-col items-center gap-2 transition-all ${
-                  deliveryType === 'pickup'
-                    ? 'border-primary bg-card'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <FaStore size={24} className={deliveryType === 'pickup' ? 'text-primary' : 'text-gray-400'} />
-                <span className="font-semibold">Retirada</span>
-              </button>
-            </div>
-          </div>
-          
           {/* Dados Pessoais */}
           {deliveryType && (
             <>
