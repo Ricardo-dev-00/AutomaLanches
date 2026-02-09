@@ -140,24 +140,130 @@ export const products = [
     description: 'Molho de tomate, mussarela e bacon crocante',
     price: 49.00,
     category: 'pizzas',
-    image: 'https://images.unsplash.com/photo-1590534247854-e973a7e3d9c6?w=400&h=300&fit=crop'
+    image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop'
   },
   
-  // Outros
+  // Macarronada
+  {
+    id: 20,
+    name: 'Macarrão à Bolonhesa',
+    description: 'Macarrão com molho bolonhesa tradicional',
+    price: 32.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop'
+  },
+  {
+    id: 21,
+    name: 'Macarrão ao Molho Branco',
+    description: 'Macarrão com molho branco cremoso',
+    price: 30.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop'
+  },
+  {
+    id: 22,
+    name: 'Macarrão à Carbonara',
+    description: 'Macarrão com bacon, ovos e queijo parmesão',
+    price: 35.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1588013273468-315fd88ea34c?w=400&h=300&fit=crop'
+  },
+  {
+    id: 23,
+    name: 'Macarrão ao Pesto',
+    description: 'Macarrão com molho pesto de manjericão',
+    price: 33.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1598866594230-a7c12756260f?w=400&h=300&fit=crop'
+  },
+  {
+    id: 26,
+    name: 'Macarrão ao Alho e Óleo',
+    description: 'Macarrão com alho, azeite e pimenta',
+    price: 28.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop'
+  },
+  {
+    id: 27,
+    name: 'Macarrão com Frango',
+    description: 'Macarrão ao molho de tomate com frango desfiado',
+    price: 36.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400&h=300&fit=crop'
+  },
+  {
+    id: 28,
+    name: 'Lasanha à Bolonhesa',
+    description: 'Lasanha tradicional com molho bolonhesa e queijo',
+    price: 38.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400&h=300&fit=crop'
+  },
+  {
+    id: 29,
+    name: 'Nhoque ao Molho Sugo',
+    description: 'Nhoque de batata com molho sugo caseiro',
+    price: 34.00,
+    category: 'macarronada',
+    image: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=400&h=300&fit=crop'
+  },
+  
+  // Batatas Fritas
   {
     id: 12,
-    name: 'Batata Frita',
+    name: 'Batata Frita Tradicional',
     description: 'Porção de batata frita crocante',
     price: 18.00,
-    category: 'outros',
+    category: 'batatas-fritas',
     image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop'
+  },
+  {
+    id: 24,
+    name: 'Batata Frita com Cheddar e Bacon',
+    description: 'Batata frita coberta com cheddar e bacon',
+    price: 25.00,
+    category: 'batatas-fritas',
+    image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=400&h=300&fit=crop'
+  },
+  {
+    id: 25,
+    name: 'Batata Rústica',
+    description: 'Batata rústica temperada com ervas',
+    price: 22.00,
+    category: 'batatas-fritas',
+    image: 'https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&h=300&fit=crop'
+  },
+  {
+    id: 30,
+    name: 'Batata Frita com Chili',
+    description: 'Batata frita com chili de carne moída',
+    price: 27.00,
+    category: 'batatas-fritas',
+    image: 'https://images.unsplash.com/photo-1618449840665-9ed506d73a34?w=400&h=300&fit=crop'
+  },
+  {
+    id: 31,
+    name: 'Batata Canoa',
+    description: 'Batata canoa crocante',
+    price: 20.00,
+    category: 'batatas-fritas',
+    image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop'
+  },
+  {
+    id: 32,
+    name: 'Batata Soufflé',
+    description: 'Batata soufflé leve e crocante',
+    price: 24.00,
+    category: 'batatas-fritas',
+    image: 'https://images.unsplash.com/photo-1518013431117-eb1465fa5752?w=400&h=300&fit=crop'
   },
   {
     id: 13,
     name: 'Onion Rings',
     description: 'Porção de anéis de cebola empanados',
     price: 16.00,
-    category: 'outros',
+    category: 'batatas-fritas',
     image: 'https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&h=300&fit=crop'
   }
 ];
@@ -165,7 +271,8 @@ export const products = [
 export const categories = [
   { id: 'hamburguers', name: 'Hambúrgueres', icon: '🍔' },
   { id: 'pizzas', name: 'Pizzas', icon: '🍕' },
+  { id: 'macarronada', name: 'Macarronada', icon: '🍝' },
+  { id: 'batatas-fritas', name: 'Batatas Fritas', icon: '🍟' },
   { id: 'bebidas', name: 'Bebidas', icon: '🥤' },
-  { id: 'doces', name: 'Doces', icon: '🍰' },
-  { id: 'outros', name: 'Outros', icon: '🍟' }
+  { id: 'doces', name: 'Doces', icon: '🍰' }
 ];

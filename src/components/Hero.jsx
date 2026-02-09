@@ -5,8 +5,17 @@ const Hero = () => {
   const lanchoneteWhatsApp = `https://wa.me/${whatsappNumber}`;
   
   return (
-    <section className="mt-16 bg-gradient-to-r from-gray-900 via-black to-gray-800 text-white">
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+    <section className="mt-16 relative bg-black text-white overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/images/banner/chapaquente.png)' }}
+      />
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black/60" />
+      
+      {/* Content */}
+      <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-16">
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 drop-shadow-lg">
             Onde o sabor reina 👑

@@ -22,6 +22,23 @@ function App() {
   
   const { items, getTotal, clearCart } = useCartStore();
   
+  // Função para resetar para home
+  const handleResetToHome = () => {
+    setSelectedCategory('all');
+    setExpandedCategory(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Função para scrollar até a categoria
+  const scrollToCategory = (categoryId) => {
+    setTimeout(() => {
+      const element = document.getElementById(`category-${categoryId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+  
   // Filtrar produtos por categoria
   const filteredProducts = selectedCategory === 'all' 
     ? products 
@@ -95,7 +112,7 @@ function App() {
   
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onLogoClick={handleResetToHome} />
       
       {currentPage === 'home' && (
         <>
@@ -115,9 +132,13 @@ function App() {
               {categories.map(category => (
                 <li key={category.id}>
                   <button
-                    onClick={() =>
-                      setExpandedCategory(prev => (prev === category.id ? null : category.id))
-                    }
+                    onClick={() => {
+                      const isExpanding = expandedCategory !== category.id;
+                      setExpandedCategory(prev => (prev === category.id ? null : category.id));
+                      if (isExpanding) {
+                        scrollToCategory(category.id);
+                      }
+                    }}
                     className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left bg-card text-textPrimary hover:bg-gray-200 transition-all duration-200"
                   >
                     <span className="flex items-center gap-2 font-medium">
@@ -131,6 +152,7 @@ function App() {
                     </span>
                   </button>
                   <div
+                    id={`category-${category.id}`}
                     className={`mt-3 overflow-hidden transition-all duration-300 ease-out ${
                       expandedCategory === category.id ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
                     }`}

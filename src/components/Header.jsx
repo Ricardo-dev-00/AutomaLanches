@@ -1,7 +1,7 @@
 import { FaInstagram, FaWhatsapp, FaFacebook, FaShoppingCart } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 
-const Header = () => {
+const Header = ({ onLogoClick }) => {
   const { getItemCount, openCart } = useCartStore();
   const itemCount = getItemCount();
   
@@ -13,17 +13,20 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo e Nome */}
-          <div className="flex items-center gap-3">
+          <button 
+            onClick={onLogoClick}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-2xl shadow-lg">
               👑
             </div>
-            <div>
+            <div className="text-left">
               <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                 Rei da Chapa
               </h1>
               <p className="text-xs text-textSecondary">Delivery & Retirada</p>
             </div>
-          </div>
+          </button>
           
           {/* Ações */}
           <div className="flex items-center gap-4">
