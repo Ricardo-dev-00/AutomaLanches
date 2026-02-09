@@ -81,13 +81,31 @@ app.post('/api/generate-pix', (req, res) => {
   }
 });
 
+// Rota para obter próximo número de pedido
+app.post('/api/get-order-number', (req, res) => {
+  try {
+    const orderNumber = generateOrderNumber();
+    res.json({ 
+      success: true, 
+      orderNumber 
+    });
+  } catch (error) {
+    console.error('Erro ao gerar número de pedido:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro ao gerar número de pedido',
+      error: error.message 
+    });
+  }
+});
+
 // Rota para enviar pedido ao Telegram
 app.post('/api/send-order', async (req, res) => {
   try {
-    const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor } = req.body;
+    const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor, orderNumber: providedOrderNumber } = req.body;
     
-    // Gerar número do pedido único
-    const orderNumber = generateOrderNumber();
+    // Usar número fornecido (para Pix) ou gerar novo
+    const orderNumber = providedOrderNumber || generateOrderNumber();
     
     // Formatar lista de itens
     const itemsList = items.map(item => {
