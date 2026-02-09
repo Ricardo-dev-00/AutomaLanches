@@ -122,7 +122,7 @@ const Checkout = ({ onBack, onContinue }) => {
       }
     }
     
-    if (formData.paymentMethod === 'dinheiro' && !changeConfirmed) {
+    if (formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && !changeConfirmed) {
       return false;
     }
     
@@ -283,16 +283,43 @@ const Checkout = ({ onBack, onContinue }) => {
                       />
                       <span className="font-medium">
                         {method === 'pix' && '💳 Pix'}
-                        {method === 'dinheiro' && '💵 Dinheiro na entrega'}
-                        {method === 'cartao' && '💳 Cartão na entrega'}
+                        {method === 'dinheiro' && (deliveryType === 'delivery' ? '💵 Dinheiro na entrega' : '💵 Dinheiro')}
+                        {method === 'cartao' && '💳 Débito ou Crédito'}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
               
-              {/* Troco (apenas se dinheiro) */}
-              {formData.paymentMethod === 'dinheiro' && (
+              {/* Bandeiras de cartão */}
+              {formData.paymentMethod === 'cartao' && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold mb-4 text-lg">Bandeiras aceitas</h3>
+                  <div className="flex gap-4 flex-wrap">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="bg-white border-2 border-blue-600 rounded px-4 py-2 font-bold text-blue-600">
+                        VISA
+                      </div>
+                      <span className="text-xs text-textSecondary">Débito/Crédito</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="bg-white border-2 border-red-600 rounded px-4 py-2 font-bold">
+                        <span className="text-red-600">Master</span><span className="text-orange-600">Card</span>
+                      </div>
+                      <span className="text-xs text-textSecondary">Débito/Crédito</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="bg-orange-600 text-white rounded px-4 py-2 font-bold">
+                        ELO
+                      </div>
+                      <span className="text-xs text-textSecondary">Débito/Crédito</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Troco (apenas se dinheiro e entrega) */}
+              {formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && (
                 <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
                   <h3 className="font-semibold mb-3 text-lg">Precisa de troco?</h3>
                   <div className="space-y-3">

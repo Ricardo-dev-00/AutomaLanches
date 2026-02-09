@@ -111,7 +111,7 @@ app.post('/api/send-order', async (req, res) => {
     const paymentMethodText = {
       'pix': '💳 Pix',
       'dinheiro': '💵 Dinheiro',
-      'cartao': '💳 Cartão na entrega'
+      'cartao': '💳 Débito ou Crédito'
     }[paymentMethod];
     
     const paymentStatus = paymentMethod === 'pix' 
