@@ -1,6 +1,6 @@
 import { FaCheckCircle, FaWhatsapp } from 'react-icons/fa';
 
-const OrderConfirmation = ({ onClose, orderNumber }) => {
+const OrderConfirmation = ({ onClose, orderNumber, deliveryType }) => {
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
   const lanchoneteWhatsApp = `https://wa.me/${whatsappNumber}`;
   
@@ -20,10 +20,14 @@ const OrderConfirmation = ({ onClose, orderNumber }) => {
           </div>
         )}
         
-        <p className="text-textSecondary mb-6">
-          Seu pedido foi enviado com sucesso para a lanchonete.
-          Em breve entraremos em contato via WhatsApp para confirmar.
-        </p>
+        <div className="space-y-4 mb-6">
+          <p className="text-textSecondary">
+            Seu pedido foi enviado com sucesso para a lanchonete.
+            {deliveryType === 'pickup' 
+              ? ' Você será avisado pelo WhatsApp quando seu pedido estiver pronto para retirada.'
+              : ' Em breve entraremos em contato via WhatsApp para confirmar.'}
+          </p>
+        </div>
         
         <div className="space-y-3">
           <a

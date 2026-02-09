@@ -167,7 +167,7 @@ function App() {
       )}
       
       {currentPage === 'confirmation' && (
-        <OrderConfirmation onClose={handleCloseConfirmation} orderNumber={orderNumber} />
+        <OrderConfirmation onClose={handleCloseConfirmation} orderNumber={orderNumber} deliveryType={orderData?.deliveryType} />
       )}
     </div>
   );
