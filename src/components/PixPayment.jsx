@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaArrowLeft, FaCopy, FaCheck, FaWhatsapp } from 'react-icons/fa';
+import { FaArrowLeft, FaCopy, FaCheck, FaWhatsapp, FaRocket } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 import QRCode from 'qrcode';
 
@@ -171,7 +171,7 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
           </div>
           
           {/* Botão de Confirmação */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <button
               onClick={handleSendReceipt}
               className="btn-primary w-full text-lg flex items-center justify-center gap-2"
@@ -180,11 +180,18 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
               Já paguei - Enviar Comprovante
             </button>
             
-            <p className="text-center text-sm text-textSecondary">
-              Ao clicar acima, você será direcionado ao WhatsApp para enviar o comprovante.
-              <br />
-              <strong>Seu pedido será enviado automaticamente após isso.</strong>
-            </p>
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <p className="text-center text-sm text-textSecondary mb-3">
+                Ao clicar no botão acima, você será direcionado ao WhatsApp para enviar o comprovante.
+              </p>
+              <div className="bg-green-100 border-l-4 border-green-500 rounded p-3 flex items-start gap-3">
+                <FaRocket className="text-green-600 mt-1 flex-shrink-0" size={18} />
+                <div>
+                  <p className="font-bold text-green-700">Seu pedido será enviado automaticamente!</p>
+                  <p className="text-sm text-green-600 mt-1">Assim que confirmarmos o pagamento, você receberá um aviso no WhatsApp informando que seu pedido está sendo preparado.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
