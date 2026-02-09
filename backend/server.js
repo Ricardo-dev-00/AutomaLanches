@@ -26,27 +26,23 @@ const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');
 
-// Função para gerar número do pedido único baseado em timestamp
+// Função para gerar número do pedido único (contador simples começando do 1)
 function generateOrderNumber() {
   try {
-    // Se o arquivo existe, usar o valor persistido + incrementar
     if (fs.existsSync(ORDER_COUNTER_FILE)) {
       const data = fs.readFileSync(ORDER_COUNTER_FILE, 'utf8');
-      const { baseNumber } = JSON.parse(data);
-      const currentNumber = baseNumber + 1;
-      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ baseNumber: currentNumber }));
+      let { currentNumber } = JSON.parse(data);
+      currentNumber = currentNumber + 1;
+      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ currentNumber }));
       return currentNumber;
     } else {
-      // Primeira vez: usar timestamp como base (últimos 6 dígitos do timestamp + sequencial)
-      const timestamp = Math.floor(Date.now() / 1000);
-      const baseNumber = parseInt(String(timestamp).slice(-6)) * 100; // Espaço para 100 pedidos por segundo
-      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ baseNumber }));
-      return baseNumber;
+      // Primeira execução: começar do 1
+      fs.writeFileSync(ORDER_COUNTER_FILE, JSON.stringify({ currentNumber: 1 }));
+      return 1;
     }
   } catch (error) {
     console.error('Erro ao gerar número do pedido:', error);
-    // Fallback: gerar um número aleatório grande se tudo falhar
-    return Math.floor(Math.random() * 900000) + 100000;
+    return Math.floor(Math.random() * 9000) + 1000;
   }
 }
 
