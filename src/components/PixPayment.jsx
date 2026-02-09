@@ -3,7 +3,7 @@ import { FaArrowLeft, FaCopy, FaCheck, FaWhatsapp, FaRocket } from 'react-icons/
 import useCartStore from '../store/cartStore';
 import QRCode from 'qrcode';
 
-const PixPayment = ({ orderData, onBack, onConfirm }) => {
+const PixPayment = ({ orderData, orderNumber, onBack, onConfirm }) => {
   const [copied, setCopied] = useState(false);
   const [pixCode, setPixCode] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -61,7 +61,7 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
   };
   
   const handleSendReceipt = () => {
-    const message = `Olá! 👋\nAcabei de realizar o pagamento via Pix.\n\n🧾 Pedido no nome: ${orderData.name}\n💰 Valor: R$ ${total.toFixed(2).replace('.', ',')}\n\nSegue o comprovante em anexo 📎`;
+    const message = `Olá! 👋\nAcabei de realizar o pagamento via Pix.\n\n🏷️ Pedido nº ${orderNumber}\n🧾 No nome: ${orderData.name}\n💰 Valor: R$ ${total.toFixed(2).replace('.', ',')}\n\nSegue o comprovante em anexo 📎`;
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     

@@ -39,6 +39,9 @@ function App() {
   
   // Continuar do checkout
   const handleContinueFromCheckout = (data) => {
+    // Gerar número do pedido antecipadamente para Pix
+    const tempOrderNumber = Math.floor(Math.random() * 900000) + 100000;
+    setOrderNumber(tempOrderNumber);
     setOrderData(data);
     
     if (data.paymentMethod === 'pix') {
@@ -161,6 +164,7 @@ function App() {
       {currentPage === 'pix' && (
         <PixPayment 
           orderData={orderData}
+          orderNumber={orderNumber}
           onBack={handleBackFromPix}
           onConfirm={handleConfirmOrder}
         />
