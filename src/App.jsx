@@ -42,23 +42,6 @@ function App() {
     setOrderData(data);
     
     if (data.paymentMethod === 'pix') {
-      // Para Pix, obter número do servidor antes de ir para a tela
-      const fetchOrderNumber = async () => {
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-          const response = await fetch(`${apiUrl}/api/get-order-number`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const result = await response.json();
-          if (result.success && result.orderNumber) {
-            setOrderNumber(result.orderNumber);
-          }
-        } catch (error) {
-          console.error('Erro ao obter número do pedido:', error);
-        }
-      };
-      fetchOrderNumber();
       setCurrentPage('pix');
     } else {
       // Se não for Pix, envia direto
@@ -86,8 +69,7 @@ function App() {
         needsChange: data.needsChange || false,
         changeFor: data.changeFor || '',
         items: items,
-        total: getTotal(),
-        orderNumber: orderNumber || null  // Incluir número do pedido se já foi gerado (para Pix)
+        total: getTotal()
       };
       
       const response = await sendOrderToTelegram(orderPayload);
@@ -179,7 +161,6 @@ function App() {
       {currentPage === 'pix' && (
         <PixPayment 
           orderData={orderData}
-          orderNumber={orderNumber}
           onBack={handleBackFromPix}
           onConfirm={handleConfirmOrder}
         />
