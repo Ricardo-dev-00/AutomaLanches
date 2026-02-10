@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CategoryFilter from './components/CategoryFilter';
 import ProductList from './components/ProductList';
 import Cart from './components/Cart';
 import CartButton from './components/CartButton';
-import Checkout from './components/Checkout';
-import PixPayment from './components/PixPayment';
-import OrderConfirmation from './components/OrderConfirmation';
 import Footer from './components/Footer';
+
+// Lazy load componentes pesados
+const Checkout = lazy(() => import('./components/Checkout'));
+const PixPayment = lazy(() => import('./components/PixPayment'));
+const OrderConfirmation = lazy(() => import('./components/OrderConfirmation'));
+
 import { products, categories } from './data/products';
 import { sendOrderToTelegram } from './services/api';
 import useCartStore from './store/cartStore';
@@ -195,22 +198,28 @@ function App() {
       )}
       
       {currentPage === 'checkout' && (
-        <Checkout 
-          onBack={handleBackToHome}
-          onContinue={handleContinueFromCheckout}
-        />
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+          <Checkout 
+            onBack={handleBackToHome}
+            onContinue={handleContinueFromCheckout}
+          />
+        </Suspense>
       )}
       
       {currentPage === 'pix' && (
-        <PixPayment 
-          orderData={orderData}
-          onBack={handleBackFromPix}
-          onConfirm={handleConfirmOrder}
-        />
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+          <PixPayment 
+            orderData={orderData}
+            onBack={handleBackFromPix}
+            onConfirm={handleConfirmOrder}
+          />
+        </Suspense>
       )}
       
       {currentPage === 'confirmation' && (
-        <OrderConfirmation onClose={handleCloseConfirmation} orderNumber={orderNumber} deliveryType={orderData?.deliveryType} />
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+          <OrderConfirmation onClose={handleCloseConfirmation} orderNumber={orderNumber} deliveryType={orderData?.deliveryType} />
+        </Suspense>
       )}
     </div>
   );

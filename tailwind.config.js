@@ -29,4 +29,9 @@ export default {
     },
   },
   plugins: [],
+  // Otimização de tamanho do CSS
+  safelist: [
+    'scroll-mt-24',
+    'md:scroll-mt-20'
+  ]
 }
