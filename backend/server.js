@@ -57,91 +57,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Inicializar bot do Telegram (opcional)
+// Inicializar bot do Telegram (opcional) - SEM POLLING para evitar problemas
 let bot = null;
 let CHAT_ID = null;
 
 if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
   try {
-    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+    // Desabilitar polling - apenas usar para enviar mensagens
+    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
     CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-    console.log('✅ Telegram Bot inicializado com sucesso');
-    
-    // Listener para callback_query (quando clica nos botões)
-    bot.on('callback_query', async (query) => {
-      try {
-        const chatId = query.message.chat.id;
-        const callbackData = query.data;
-        
-        // Extrair status e número do pedido
-        let status = '';
-        let orderNumber = '';
-        
-        if (callbackData.startsWith('preparo_')) {
-          status = 'preparo';
-          orderNumber = callbackData.replace('preparo_', '');
-        } else if (callbackData.startsWith('saiu_entrega_')) {
-          status = 'saiu_entrega';
-          orderNumber = callbackData.replace('saiu_entrega_', '');
-        } else if (callbackData.startsWith('pronto_retirada_')) {
-          status = 'pronto_retirada';
-          orderNumber = callbackData.replace('pronto_retirada_', '');
-        }
-        
-        // Carregar dados do pedido
-        const ordersData = loadOrdersData();
-        const orderData = ordersData[orderNumber];
-        
-        if (!orderData) {
-          await bot.answerCallbackQuery(query.id, {
-            text: '❌ Pedido não encontrado!',
-            show_alert: true
-          });
-          return;
-        }
-        
-        const whatsappSanitized = orderData.whatsapp;
-        const clientName = orderData.name || 'Cliente';
-        
-        // Responder ao callback query
-        await bot.answerCallbackQuery(query.id, {
-          text: '✅ Status atualizado!',
-          show_alert: false
-        });
-        
-        // Definir mensagem conforme o status
-        let messageText = '';
-        if (status === 'preparo') {
-          messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
-        } else if (status === 'saiu_entrega') {
-          messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— Rei da Chapa`;
-        } else if (status === 'pronto_retirada') {
-          messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
-        }
-        
-        // Enviar mensagem com botão do WhatsApp
-        await bot.sendMessage(chatId, messageText, {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '📲 Abrir WhatsApp do cliente',
-                  url: `https://wa.me/${whatsappSanitized}`
-                }
-              ]
-            ]
-          }
-        });
-        
-      } catch (error) {
-        console.error('Erro no callback_query:', error);
-        await bot.answerCallbackQuery(query.id, {
-          text: '❌ Erro ao processar!',
-          show_alert: true
-        });
-      }
-    });
+    console.log('✅ Telegram Bot inicializado (modo webhook/manual)');
   } catch (error) {
     console.error('⚠️ Erro ao inicializar Telegram Bot:', error.message);
     console.log('⚠️ Servidor continuará sem integração Telegram');
@@ -394,17 +319,42 @@ app.post('/api/send-order', async (req, res) => {
 // Servir frontend buildado em produção (DEVE VIR DEPOIS DAS ROTAS DA API)
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '..', 'dist');
-  app.use(express.static(distPath));
+  console.log('📁 Diretório dist:', distPath);
   
-  // Rota catch-all para SPA
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
+  // Verificar se o diretório existe
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    console.log('✅ Servindo frontend do dist/');
+    
+    // Rota catch-all para SPA
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    console.log('⚠️ Diretório dist/ não encontrado. Apenas API disponível.');
+  }
 }
 
+// Tratamento de erros não capturados
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Iniciar servidor
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('='.repeat(50));
+  console.log(`🚀 Servidor AutomaLanches ONLINE`);
+  console.log(`📡 Porta: ${PORT}`);
   console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📱 Telegram Bot: ${bot ? '✅ Configurado' : '⚠️ Não configurado'}`);
+  console.log(`📱 Telegram: ${bot ? '✅ Configurado' : '⚠️ Não configurado'}`);
+  console.log('='.repeat(50));
+});
+
+server.on('error', (error) => {
+  console.error('❌ Erro ao iniciar servidor:', error);
+  process.exit(1);
 });

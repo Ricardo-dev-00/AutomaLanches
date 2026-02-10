@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['nodejs', 'npm']
+nixPkgs = ['nodejs_18']
 
 [phases.install]
 cmds = ['npm install --production=false']
@@ -8,4 +8,4 @@ cmds = ['npm install --production=false']
 cmds = ['npm run build', 'cd backend && npm install --production']
 
 [start]
-cmd = 'NODE_ENV=production node backend/server.js'
+cmd = 'NODE_ENV=production node backend/server-simple.js'
