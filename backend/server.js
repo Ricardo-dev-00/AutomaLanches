@@ -371,6 +371,14 @@ app.post('/api/send-order', async (req, res) => {
       ]);
     }
     
+    // Adicionar botão para falar com o cliente via WhatsApp
+    inlineKeyboard.inline_keyboard.push([
+      {
+        text: '📲 Falar com Cliente',
+        url: `https://wa.me/${whatsappSanitized}`
+      }
+    ]);
+    
     await bot.sendMessage(CHAT_ID, message, { 
       parse_mode: 'Markdown',
       reply_markup: inlineKeyboard

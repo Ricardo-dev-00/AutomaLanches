@@ -286,10 +286,12 @@ Cada pedido possui **botões inline** (clicáveis) que se adaptam ao tipo de ent
 #### Para Delivery 🚚
 - **🍳 Pedido em preparo** - Avisa que o pedido foi recebido e está sendo preparado
 - **🚴 Saiu para entrega** - Notifica que o entregador já saiu com o pedido
+- **📲 Falar com Cliente** - Abre WhatsApp com o cliente (sempre disponível)
 
 #### Para Retirada 🏪
 - **🍳 Pedido em preparo** - Avisa que o pedido foi recebido e está sendo preparado
 - **🏪 Pronto para retirada** - Notifica que o pedido está pronto para buscar
+- **📲 Falar com Cliente** - Abre WhatsApp com o cliente (sempre disponível)
 
 ### 💬 Mensagens Automáticas
 
