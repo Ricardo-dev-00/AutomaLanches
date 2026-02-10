@@ -8,4 +8,4 @@ cmds = ['npm install --production=false']
 cmds = ['npm run build', 'cd backend && npm install --production']
 
 [start]
-cmd = 'NODE_ENV=production node backend/server-simple.js'
+cmd = 'NODE_ENV=production node backend/server.js'
