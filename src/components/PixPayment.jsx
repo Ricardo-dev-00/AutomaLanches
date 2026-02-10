@@ -18,9 +18,14 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
   useEffect(() => {
     const generatePix = async () => {
       try {
-        // Em produção, usar URL relativa. Em dev, pode usar localhost:3001
-        const apiUrl = import.meta.env.VITE_API_URL || '';
+        // Detectar se estamos em localhost ou produção
+        let apiUrl = '';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          apiUrl = 'http://localhost:3001';
+        }
+        // Se apiUrl está vazio, usar URL relativa
         const url = apiUrl ? `${apiUrl}/api/generate-pix` : '/api/generate-pix';
+        console.log('📁 Requisitando Pix em:', url);
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

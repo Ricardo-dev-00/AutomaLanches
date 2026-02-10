@@ -1,10 +1,21 @@
-// Em produção, usar URLs relativas (/api/...)
-// Em desenvolvimento, pode usar localhost:3001
-const API_URL = import.meta.env.VITE_API_URL || '';
+// Sempre usar URL relativa em produção
+// A URL será resolvida automaticamente baseada no domínio atual
+const getApiUrl = () => {
+  // Se estamos em localhost (desenvolvimento)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  // Em produção, usar URL relativa
+  return '';
+};
+
+const API_URL = import.meta.env.VITE_API_URL || getApiUrl();
 
 export const sendOrderToTelegram = async (orderData) => {
   try {
-    const url = API_URL ? `${API_URL}/api/send-order` : '/api/send-order';
+    const baseUrl = getApiUrl();
+    const url = baseUrl ? `${baseUrl}/api/send-order` : '/api/send-order';
+    console.log('📁 Enviando para:', url);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
