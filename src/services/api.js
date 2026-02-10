@@ -1,8 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Em produção, usar URLs relativas (/api/...)
+// Em desenvolvimento, pode usar localhost:3001
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const sendOrderToTelegram = async (orderData) => {
   try {
-    const response = await fetch(`${API_URL}/api/send-order`, {
+    const url = API_URL ? `${API_URL}/api/send-order` : '/api/send-order';
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
