@@ -19,12 +19,36 @@ const PORT = process.env.PORT || 3001;
 
 // Middlewares - ordem importa para performance
 app.use(compression()); // Comprimir respostas
+
+// Configurar CORS permitindo o domínio do Railway e localhost
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3001',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Permitir requests sem origin (como mobile apps ou curl)
+    if (!origin) return callback(null, true);
+    
+    // Permitir qualquer domínio do Railway (*.up.railway.app)
+    if (origin.includes('.up.railway.app')) {
+      return callback(null, true);
+    }
+    
+    // Permitir origens específicas
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    callback(null, true); // Em produção, permitir todas as origens
+  },
   credentials: true,
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type']
 }));
+
 app.use(express.json({ limit: '10kb' })); // Limitar tamanho do payload
 
 // Cache headers para assets estáticos
@@ -334,6 +358,17 @@ bot.on('callback_query', async (query) => {
     });
   }
 });
+
+// Servir frontend buildado em produção (DEVE VIR DEPOIS DAS ROTAS DA API)
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '..', 'dist');
+  app.use(express.static(distPath));
+  
+  // Rota catch-all para SPA
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Iniciar servidor
 app.listen(PORT, () => {

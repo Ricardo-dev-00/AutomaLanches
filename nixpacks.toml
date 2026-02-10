@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ['nodejs', 'npm']
+
+[phases.install]
+cmds = ['npm install', 'npm run build', 'cd backend && npm install']
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = 'cd backend && NODE_ENV=production node server.js'
