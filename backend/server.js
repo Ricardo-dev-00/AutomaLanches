@@ -57,9 +57,98 @@ app.use((req, res, next) => {
   next();
 });
 
-// Inicializar bot do Telegram
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// Inicializar bot do Telegram (opcional)
+let bot = null;
+let CHAT_ID = null;
+
+if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+  try {
+    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+    CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+    console.log('✅ Telegram Bot inicializado com sucesso');
+    
+    // Listener para callback_query (quando clica nos botões)
+    bot.on('callback_query', async (query) => {
+      try {
+        const chatId = query.message.chat.id;
+        const callbackData = query.data;
+        
+        // Extrair status e número do pedido
+        let status = '';
+        let orderNumber = '';
+        
+        if (callbackData.startsWith('preparo_')) {
+          status = 'preparo';
+          orderNumber = callbackData.replace('preparo_', '');
+        } else if (callbackData.startsWith('saiu_entrega_')) {
+          status = 'saiu_entrega';
+          orderNumber = callbackData.replace('saiu_entrega_', '');
+        } else if (callbackData.startsWith('pronto_retirada_')) {
+          status = 'pronto_retirada';
+          orderNumber = callbackData.replace('pronto_retirada_', '');
+        }
+        
+        // Carregar dados do pedido
+        const ordersData = loadOrdersData();
+        const orderData = ordersData[orderNumber];
+        
+        if (!orderData) {
+          await bot.answerCallbackQuery(query.id, {
+            text: '❌ Pedido não encontrado!',
+            show_alert: true
+          });
+          return;
+        }
+        
+        const whatsappSanitized = orderData.whatsapp;
+        const clientName = orderData.name || 'Cliente';
+        
+        // Responder ao callback query
+        await bot.answerCallbackQuery(query.id, {
+          text: '✅ Status atualizado!',
+          show_alert: false
+        });
+        
+        // Definir mensagem conforme o status
+        let messageText = '';
+        if (status === 'preparo') {
+          messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
+        } else if (status === 'saiu_entrega') {
+          messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— Rei da Chapa`;
+        } else if (status === 'pronto_retirada') {
+          messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
+        }
+        
+        // Enviar mensagem com botão do WhatsApp
+        await bot.sendMessage(chatId, messageText, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '📲 Abrir WhatsApp do cliente',
+                  url: `https://wa.me/${whatsappSanitized}`
+                }
+              ]
+            ]
+          }
+        });
+        
+      } catch (error) {
+        console.error('Erro no callback_query:', error);
+        await bot.answerCallbackQuery(query.id, {
+          text: '❌ Erro ao processar!',
+          show_alert: true
+        });
+      }
+    });
+  } catch (error) {
+    console.error('⚠️ Erro ao inicializar Telegram Bot:', error.message);
+    console.log('⚠️ Servidor continuará sem integração Telegram');
+  }
+} else {
+  console.log('⚠️ Telegram não configurado (TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID ausentes)');
+}
 
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');
@@ -117,7 +206,17 @@ function generateOrderNumber() {
 
 // Rota de teste
 app.get('/', (req, res) => {
-  res.json({ message: 'API AutomaLanches funcionando!' });
+  res.json({ 
+    message: 'API AutomaLanches funcionando!',
+    status: 'online',
+    telegram: bot ? 'configurado' : 'não configurado',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Health check para Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 // Rota para gerar código Pix
@@ -167,6 +266,15 @@ function sanitizeWhatsAppNumber(phone) {
 // Rota para enviar pedido ao Telegram
 app.post('/api/send-order', async (req, res) => {
   try {
+    // Verificar se o Telegram está configurado
+    if (!bot || !CHAT_ID) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Telegram não está configurado. Entre em contato pelo WhatsApp.',
+        error: 'TELEGRAM_NOT_CONFIGURED'
+      });
+    }
+    
     const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor } = req.body;
     
     // Sanitizar número de WhatsApp
@@ -283,82 +391,6 @@ app.post('/api/send-order', async (req, res) => {
   }
 });
 
-// Listener para callback_query (quando clica nos botões)
-bot.on('callback_query', async (query) => {
-  try {
-    const chatId = query.message.chat.id;
-    const callbackData = query.data;
-    
-    // Extrair status e número do pedido
-    let status = '';
-    let orderNumber = '';
-    
-    if (callbackData.startsWith('preparo_')) {
-      status = 'preparo';
-      orderNumber = callbackData.replace('preparo_', '');
-    } else if (callbackData.startsWith('saiu_entrega_')) {
-      status = 'saiu_entrega';
-      orderNumber = callbackData.replace('saiu_entrega_', '');
-    } else if (callbackData.startsWith('pronto_retirada_')) {
-      status = 'pronto_retirada';
-      orderNumber = callbackData.replace('pronto_retirada_', '');
-    }
-    
-    // Carregar dados do pedido
-    const ordersData = loadOrdersData();
-    const orderData = ordersData[orderNumber];
-    
-    if (!orderData) {
-      await bot.answerCallbackQuery(query.id, {
-        text: '❌ Pedido não encontrado!',
-        show_alert: true
-      });
-      return;
-    }
-    
-    const whatsappSanitized = orderData.whatsapp;
-    const clientName = orderData.name || 'Cliente';
-    
-    // Responder ao callback query
-    await bot.answerCallbackQuery(query.id, {
-      text: '✅ Status atualizado!',
-      show_alert: false
-    });
-    
-    // Definir mensagem conforme o status
-    let messageText = '';
-    if (status === 'preparo') {
-      messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
-    } else if (status === 'saiu_entrega') {
-      messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— Rei da Chapa`;
-    } else if (status === 'pronto_retirada') {
-      messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
-    }
-    
-    // Enviar mensagem com botão do WhatsApp
-    await bot.sendMessage(chatId, messageText, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '📲 Abrir WhatsApp do cliente',
-              url: `https://wa.me/${whatsappSanitized}`
-            }
-          ]
-        ]
-      }
-    });
-    
-  } catch (error) {
-    console.error('Erro no callback_query:', error);
-    await bot.answerCallbackQuery(query.id, {
-      text: '❌ Erro ao processar!',
-      show_alert: true
-    });
-  }
-});
-
 // Servir frontend buildado em produção (DEVE VIR DEPOIS DAS ROTAS DA API)
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '..', 'dist');
@@ -371,7 +403,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📱 Telegram Bot configurado: ${process.env.TELEGRAM_BOT_TOKEN ? 'Sim' : 'Não'}`);
+  console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📱 Telegram Bot: ${bot ? '✅ Configurado' : '⚠️ Não configurado'}`);
 });

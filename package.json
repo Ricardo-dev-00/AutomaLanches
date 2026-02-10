@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "server": "node backend/server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "start": "npm run build && cd backend && npm install && node server.js"
+    "start": "NODE_ENV=production node backend/server.js"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
