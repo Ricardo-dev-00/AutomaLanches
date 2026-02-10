@@ -129,19 +129,23 @@ function generateOrderNumber() {
   }
 }
 
-// Rota de teste
-app.get('/', (req, res) => {
+// Health check para Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    telegram: bot ? 'configurado' : 'não configurado',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Rota de status da API (apenas para testes)
+app.get('/api/status', (req, res) => {
   res.json({ 
     message: 'API AutomaLanches funcionando!',
     status: 'online',
     telegram: bot ? 'configurado' : 'não configurado',
     timestamp: new Date().toISOString()
   });
-});
-
-// Health check para Railway
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
 });
 
 // Rota para gerar código Pix
