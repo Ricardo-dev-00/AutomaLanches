@@ -152,6 +152,12 @@ const Checkout = ({ onBack, onContinue }) => {
       return;
     }
     
+    // Verificar se precisa confirmar a questão do troco
+    if (formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && !changeConfirmed) {
+      setErrorMessage('Por favor, informe no campo acima se precisará de troco ou não.');
+      return;
+    }
+    
     if (!isFormValid()) {
       setErrorMessage('Por favor, preencha todos os campos obrigatórios.');
       return;
@@ -170,10 +176,6 @@ const Checkout = ({ onBack, onContinue }) => {
       if (!formData.street || !formData.number || !formData.neighborhood) {
         return false;
       }
-    }
-    
-    if (formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && !changeConfirmed) {
-      return false;
     }
     
     return true;
@@ -352,6 +354,7 @@ const Checkout = ({ onBack, onContinue }) => {
                           onChange={() => {
                             setFormData({...formData, needsChange: false, changeFor: ''});
                             setChangeConfirmed(false);
+                            setErrorMessage('');
                           }}
                           className="w-4 h-4 text-primary"
                         />
@@ -367,6 +370,7 @@ const Checkout = ({ onBack, onContinue }) => {
                           onChange={() => {
                             setFormData({...formData, needsChange: true});
                             setChangeConfirmed(false);
+                            setErrorMessage('');
                           }}
                           className="w-4 h-4 text-primary"
                         />
@@ -387,6 +391,7 @@ const Checkout = ({ onBack, onContinue }) => {
                             onChange={handleChangeForInput}
                             className="input-field"
                             disabled={changeConfirmed}
+                            required
                           />
                           <p className="text-xs text-textSecondary mt-1">
                             Digite apenas números
@@ -397,9 +402,15 @@ const Checkout = ({ onBack, onContinue }) => {
                             type="button"
                             onClick={() => {
                               if (formData.changeFor) {
+                                const changeValue = parseFloat(formData.changeFor.replace('R$', '').replace('.', '').replace(',', '.'));
+                                if (changeValue < cartTotal) {
+                                  setErrorMessage(`⚠️ O valor informado para troco deve ser maior que o valor total do pedido (${cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
+                                  return;
+                                }
                                 setChangeConfirmed(true);
+                                setErrorMessage('');
                               } else {
-                                alert('Por favor, informe o valor para troco');
+                                setErrorMessage('Por favor, informe o valor para troco');
                               }
                             }}
                             disabled={!formData.changeFor}
@@ -440,7 +451,10 @@ const Checkout = ({ onBack, onContinue }) => {
                     {!formData.needsChange && (
                       <button
                         type="button"
-                        onClick={() => setChangeConfirmed(true)}
+                        onClick={() => {
+                          setChangeConfirmed(true);
+                          setErrorMessage('');
+                        }}
                         className="btn-primary w-full"
                       >
                         ✓ Confirmar (sem troco)
@@ -462,7 +476,7 @@ const Checkout = ({ onBack, onContinue }) => {
                 type="submit"
                 className="btn-primary w-full text-lg"
               >
-                Continuar
+                Confirmar pedido {cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </button>
               
               {/* Localização da Lanchonete (sempre no final, apenas para retirada) */}
