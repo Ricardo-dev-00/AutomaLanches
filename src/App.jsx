@@ -104,10 +104,7 @@ function App() {
         total: getTotalWithDelivery()
       };
       
-      console.log('📦 Enviando pedido:', orderPayload);
-      
       const response = await sendOrderToTelegram(orderPayload);
-      console.log('✅ Resposta do servidor:', response);
       
       if (response.orderNumber) {
         setOrderNumber(response.orderNumber);

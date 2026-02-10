@@ -143,16 +143,13 @@ function sanitizeWhatsAppNumber(phone) {
 // Rota para enviar pedido ao Telegram
 app.post('/api/send-order', async (req, res) => {
   try {
-    console.log('PEDIDO RECEBIDO');
     const { deliveryType, name, whatsapp, street, number, neighborhood, reference, paymentMethod, items, total, needsChange, changeFor } = req.body;
     
     // Sanitizar número de WhatsApp
     const whatsappSanitized = sanitizeWhatsAppNumber(whatsapp);
-    console.log('WHATSAPP SANITIZADO:', whatsappSanitized);
     
     // Gerar número do pedido único
     const orderNumber = generateOrderNumber();
-    console.log('NUMERO DO PEDIDO:', orderNumber);
     
     // Formatar lista de itens
     const itemsList = items.map(item => {
@@ -237,12 +234,6 @@ app.post('/api/send-order', async (req, res) => {
       ]);
     }
     
-    console.log('BOTOES OK');
-    console.log('TIPO:', deliveryType);
-    console.log('ENVIANDO...');
-    console.log('CHAT_ID:', CHAT_ID);
-    console.log('BOT_TOKEN_EXISTS:', !!process.env.TELEGRAM_BOT_TOKEN);
-    
     await bot.sendMessage(CHAT_ID, message, { 
       parse_mode: 'Markdown',
       reply_markup: inlineKeyboard
@@ -250,8 +241,6 @@ app.post('/api/send-order', async (req, res) => {
     
     // Salvar dados do pedido para uso no callback_query
     saveOrderData(orderNumber, whatsappSanitized, name);
-    
-    console.log('✅ PEDIDO ENVIADO COM SUCESSO');
     
     res.json({ 
       success: true, 
