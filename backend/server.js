@@ -21,11 +21,42 @@ app.use(cors());
 app.use(express.json());
 
 // Inicializar bot do Telegram
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');
+
+// Arquivo para armazenar dados dos pedidos (para callbacks)
+const ORDERS_DATA_FILE = path.join(__dirname, 'ordersData.json');
+
+// Função para carregar dados dos pedidos
+function loadOrdersData() {
+  try {
+    if (fs.existsSync(ORDERS_DATA_FILE)) {
+      const data = fs.readFileSync(ORDERS_DATA_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar dados dos pedidos:', error);
+  }
+  return {};
+}
+
+// Função para salvar dados do pedido
+function saveOrderData(orderNumber, whatsappSanitized, clientName) {
+  try {
+    const ordersData = loadOrdersData();
+    ordersData[orderNumber] = {
+      whatsapp: whatsappSanitized,
+      name: clientName,
+      timestamp: new Date().toISOString()
+    };
+    fs.writeFileSync(ORDERS_DATA_FILE, JSON.stringify(ordersData, null, 2));
+  } catch (error) {
+    console.error('Erro ao salvar dados do pedido:', error);
+  }
+}
 
 // Função para gerar número do pedido único (contador simples começando do 1)
 function generateOrderNumber() {
@@ -80,8 +111,8 @@ app.post('/api/generate-pix', (req, res) => {
 
 // Função para sanitizar número de WhatsApp
 function sanitizeWhatsAppNumber(phone) {
-  // Remove todos os caracteres não numéricos
-  let cleaned = phone.replace(/\D/g, '');
+  // Remove espaços e caracteres especiais
+  let cleaned = phone.trim().replace(/\D/g, '');
   
   // Se começar com 0, remove
   if (cleaned.startsWith('0')) {
@@ -152,44 +183,25 @@ app.post('/api/send-order', async (req, res) => {
       }
     }
     
-    // Mensagem do pedido
-    const message = `
-🍔 *NOVO PEDIDO #${orderNumber}*
-
-*Tipo:* ${deliveryTypeText}
-
-*Cliente:* ${name}
-📲 *WhatsApp:* ${whatsapp}
-
-📦 *Itens:*
-${itemsList}
-
-💰 *Total:* R$ ${total.toFixed(2).replace('.', ',')}
-${addressText}
-
-💳 *Pagamento:* ${paymentMethodText}${paymentStatus}${changeText}
-    `.trim();
+    // Mensagem do pedido - SEM ESPAÇOS INVISÍVEIS
+    const message = 
+      `🍔 *NOVO PEDIDO #${orderNumber}*\n\n` +
+      `*Tipo:* ${deliveryTypeText}\n\n` +
+      `*Cliente:* ${name}\n` +
+      `📲 *WhatsApp:* ${whatsapp}\n\n` +
+      `📦 *Itens:*\n` +
+      `${itemsList}\n\n` +
+      `💰 *Total:* R$ ${total.toFixed(2).replace('.', ',')}\n` +
+      (addressText ? `${addressText}\n\n` : '') +
+      `💳 *Pagamento:* ${paymentMethodText}${paymentStatus}${changeText}`;
     
-    // Criar mensagens para WhatsApp (URL encoded) - CURTAS para não exceder limite de URL
-    const msgEmPreparo = encodeURIComponent(
-      `Olá ${name}!\n\nSeu pedido #${orderNumber} está em preparo. Em breve avisamos!\n\n👨‍🍳 #ReidaChapa`
-    );
-    
-    const msgSaiuEntrega = encodeURIComponent(
-      `Olá ${name}!\n\nSeu pedido #${orderNumber} saiu para entrega!\n\n🚴 Chegando em breve!`
-    );
-    
-    const msgProntoRetirada = encodeURIComponent(
-      `Olá ${name}!\n\nSeu pedido #${orderNumber} está pronto!\n\n🏪 Pode vir buscar agora!`
-    );
-    
-    // Criar inline keyboard com botões de status
+    // Criar inline keyboard com botões de status (usando callback_data)
     const inlineKeyboard = {
       inline_keyboard: [
         [
           {
             text: '🍳 Pedido em preparo',
-            url: `https://wa.me/${whatsappSanitized}?text=${msgEmPreparo}`
+            callback_data: `preparo_${orderNumber}`
           }
         ]
       ]
@@ -200,14 +212,14 @@ ${addressText}
       inlineKeyboard.inline_keyboard.push([
         {
           text: '🚴 Saiu para entrega',
-          url: `https://wa.me/${whatsappSanitized}?text=${msgSaiuEntrega}`
+          callback_data: `saiu_entrega_${orderNumber}`
         }
       ]);
     } else {
       inlineKeyboard.inline_keyboard.push([
         {
           text: '🏪 Pronto para retirada',
-          url: `https://wa.me/${whatsappSanitized}?text=${msgProntoRetirada}`
+          callback_data: `pronto_retirada_${orderNumber}`
         }
       ]);
     }
@@ -222,6 +234,10 @@ ${addressText}
       parse_mode: 'Markdown',
       reply_markup: inlineKeyboard
     });
+    
+    // Salvar dados do pedido para uso no callback_query
+    saveOrderData(orderNumber, whatsappSanitized, name);
+    
     console.log('✅ PEDIDO ENVIADO COM SUCESSO');
     
     res.json({ 
@@ -237,6 +253,82 @@ ${addressText}
       success: false, 
       message: 'Erro ao enviar pedido',
       error: error.message 
+    });
+  }
+});
+
+// Listener para callback_query (quando clica nos botões)
+bot.on('callback_query', async (query) => {
+  try {
+    const chatId = query.message.chat.id;
+    const callbackData = query.data;
+    
+    // Extrair status e número do pedido
+    let status = '';
+    let orderNumber = '';
+    
+    if (callbackData.startsWith('preparo_')) {
+      status = 'preparo';
+      orderNumber = callbackData.replace('preparo_', '');
+    } else if (callbackData.startsWith('saiu_entrega_')) {
+      status = 'saiu_entrega';
+      orderNumber = callbackData.replace('saiu_entrega_', '');
+    } else if (callbackData.startsWith('pronto_retirada_')) {
+      status = 'pronto_retirada';
+      orderNumber = callbackData.replace('pronto_retirada_', '');
+    }
+    
+    // Carregar dados do pedido
+    const ordersData = loadOrdersData();
+    const orderData = ordersData[orderNumber];
+    
+    if (!orderData) {
+      await bot.answerCallbackQuery(query.id, {
+        text: '❌ Pedido não encontrado!',
+        show_alert: true
+      });
+      return;
+    }
+    
+    const whatsappSanitized = orderData.whatsapp;
+    const clientName = orderData.name || 'Cliente';
+    
+    // Responder ao callback query
+    await bot.answerCallbackQuery(query.id, {
+      text: '✅ Status atualizado!',
+      show_alert: false
+    });
+    
+    // Definir mensagem conforme o status
+    let messageText = '';
+    if (status === 'preparo') {
+      messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
+    } else if (status === 'saiu_entrega') {
+      messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— Rei da Chapa`;
+    } else if (status === 'pronto_retirada') {
+      messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— Rei da Chapa`;
+    }
+    
+    // Enviar mensagem com botão do WhatsApp
+    await bot.sendMessage(chatId, messageText, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '📲 Abrir WhatsApp do cliente',
+              url: `https://wa.me/${whatsappSanitized}`
+            }
+          ]
+        ]
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro no callback_query:', error);
+    await bot.answerCallbackQuery(query.id, {
+      text: '❌ Erro ao processar!',
+      show_alert: true
     });
   }
 });

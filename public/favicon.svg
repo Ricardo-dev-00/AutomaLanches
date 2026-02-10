@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Pão de cima (superior) -->
+  <path d="M 20 35 Q 20 20 50 20 Q 80 20 80 35 Z" fill="#D4A574" stroke="#8B6F47" stroke-width="1"/>
+  
+  <!-- Gergelim no pão superior -->
+  <circle cx="30" cy="28" r="2" fill="#F5DEB3"/>
+  <circle cx="40" cy="25" r="2" fill="#F5DEB3"/>
+  <circle cx="50" cy="24" r="2" fill="#F5DEB3"/>
+  <circle cx="60" cy="25" r="2" fill="#F5DEB3"/>
+  <circle cx="70" cy="28" r="2" fill="#F5DEB3"/>
+  
+  <!-- Hambúrguer (carne) -->
+  <ellipse cx="50" cy="42" rx="28" ry="6" fill="#8B4513" stroke="#5C2E0B" stroke-width="1"/>
+  
+  <!-- Queijo -->
+  <rect x="22" y="48" width="56" height="4" fill="#FFD700" rx="2"/>
+  
+  <!-- Alface -->
+  <path d="M 20 54 Q 25 52 30 54 Q 35 52 40 54 Q 45 52 50 54 Q 55 52 60 54 Q 65 52 70 54 Q 75 52 80 54 L 78 58 Q 75 57 70 58 Q 65 57 60 58 Q 55 57 50 58 Q 45 57 40 58 Q 35 57 30 58 Q 25 57 22 58 Z" fill="#228B22" stroke="#1a6b1a" stroke-width="0.5"/>
+  
+  <!-- Tomate -->
+  <circle cx="35" cy="62" r="3" fill="#FF4500"/>
+  <circle cx="65" cy="62" r="3" fill="#FF4500"/>
+  
+  <!-- Pão de baixo (inferior) -->
+  <path d="M 20 65 Q 20 80 50 80 Q 80 80 80 65 Z" fill="#D4A574" stroke="#8B6F47" stroke-width="1"/>
+  
+  <!-- Chapa/fogo (efeito de calor) -->
+  <path d="M 15 85 L 20 92 L 30 88 L 40 94 L 50 88 L 60 94 L 70 88 L 80 92 L 85 85" stroke="#FF6347" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
