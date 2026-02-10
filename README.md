@@ -185,15 +185,87 @@ npm run dev      # Desenvolvimento com watch mode
 
 ## 🚀 Deploy
 
-### Frontend (Vercel/Netlify)
-1. Faça build: `npm run build`
-2. Configure as variáveis de ambiente no painel
-3. Deploy da pasta `dist/`
+### Deploy no Railway (Recomendado)
 
-### Backend (Railway/Render/Heroku)
-1. Configure as variáveis de ambiente
-2. Deploy direto da pasta `backend/`
-3. Certifique-se de que a porta está correta
+O projeto está totalmente configurado para fazer deploy na **Railway** com frontend e backend integrados.
+
+#### Variáveis de Ambiente Necessárias:
+
+```env
+# Essencial
+NODE_ENV=production
+PORT=3001
+
+# Telegram
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+
+# PIX
+PIX_KEY=sua_chave_pix
+MERCHANT_NAME=AutomaLanches
+MERCHANT_CITY=Sua Cidade
+```
+
+#### Como fazer deploy:
+
+1. **Conectar repositório**
+   - Acesse [railway.app](https://railway.app/)
+   - Clique em "New Project" → "Deploy from GitHub"
+   - Selecione seu repositório
+
+2. **Configurar variáveis**
+   - No painel da Railway, vá em "Variables"
+   - Adicione as variáveis acima
+
+3. **Redeploy automático**
+   - Cada `git push` para `main` faz deploy automático
+   - A URL será algo como: `https://seu-app.up.railway.app`
+
+#### Características do Deploy:
+
+- ✅ Build automático com Vite
+- ✅ Frontend e backend na mesma aplicação
+- ✅ Configuração de healthcheck automática
+- ✅ Reinicialização automática em caso de erro
+- ✅ URL relativa para API (funciona em qualquer domínio)
+
+### Deploy no Vercel (Frontend) + Railway/Render (Backend)
+
+Se preferir separado:
+
+**Frontend (Vercel):**
+```bash
+npm run build
+# Deploy da pasta dist/
+```
+
+**Backend (Railway/Render):**
+- Deploy da pasta `backend/`
+- Configure as mesmas variáveis de ambiente
+
+## 🌐 Configuração de URLs da API
+
+### Detecção Automática
+
+O frontend **detecta automaticamente** se está em desenvolvimento ou produção:
+
+```javascript
+// src/services/api.js
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // Desenvolvimento: conecta a http://localhost:3001
+  apiUrl = 'http://localhost:3001';
+} else {
+  // Produção: usa URL relativa (mesma origem)
+  apiUrl = '';  // /api/send-order
+}
+```
+
+### Vantagens
+
+- ✅ **Funciona em qualquer domínio** - Não precisa configurar URLs
+- ✅ **Desenvolvimento local** - Conecta corretamente a localhost:3001
+- ✅ **Produção simples** - Usa URLs relativas (/api/...)
+- ✅ **Sem CORS problems** - Mesma origem resolve automaticamente
 
 ## 🤖 Atualização de Status via Telegram Bot
 
@@ -235,12 +307,14 @@ Obrigado pela preferência 🙏
 
 **Saiu para entrega:**
 ```
-Olá [Nome do Cliente]! 🚴‍♂️
+Saiu para entrega!
 
-Seu pedido #[Número] acabou de sair para entrega!
-Em breve chegará até você.
+Olá [Nome do Cliente]! 👋
 
-Qualquer dúvida, estamos à disposição 😊
+Seu pedido #[Número] já saiu para entrega
+Em breve ele chega até você! 🍔😋
+
+Desejamos uma ótima refeição!
 ```
 
 **Pronto para retirada:**
@@ -272,14 +346,37 @@ Os botões são exibidos **um por linha** para:
 
 ## 🔮 Melhorias Futuras
 
-- [ ] Painel administrativo
+- [ ] Painel administrativo com dashboard
 - [ ] Integração com API de pagamento Pix automático
-- [ ] Sistema de autenticação
-- [ ] Histórico de pedidos
+- [ ] Sistema de autenticação para administrador
+- [ ] Histórico de pedidos do cliente
 - [ ] Notificações push
-- [ ] Cupons de desconto
+- [ ] Cupons e descontos dinâmicos
 - [ ] Avaliações de produtos
 - [ ] Sistema de fidelidade
+
+## 🛠️ Arquitetura Técnica
+
+### Frontend
+- **Single Page Application (SPA)** com React
+- **Gerenciamento de estado** centralizado com Zustand
+- **CSS utility-first** com Tailwind CSS
+- **Build otimizado** com Vite (desenvolvimento rápido)
+- **Detecção automática** de ambiente para URLs da API
+
+### Backend
+- **Express server** servindo API + frontend
+- **Node-telegram-bot-api** para integração com Telegram
+- **Polling ativado** para escutar cliques nos botões (callback_query)
+- **Armazenamento de dados** em JSON files (simples e funcional)
+- **CORS habilitado** para requisições do frontend
+
+### Fluxo de Dados
+```
+Cliente → Frontend (React) → Backend (Express) → Telegram Bot
+           ↓                    ↓
+        Zustand Store      JSON Files (pedidos)
+```
 
 ## 📄 Licença
 
