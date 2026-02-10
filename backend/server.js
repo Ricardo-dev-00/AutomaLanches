@@ -57,16 +57,92 @@ app.use((req, res, next) => {
   next();
 });
 
-// Inicializar bot do Telegram (opcional) - SEM POLLING para evitar problemas
+// Inicializar bot do Telegram (opcional)
 let bot = null;
 let CHAT_ID = null;
 
 if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
   try {
-    // Desabilitar polling - apenas usar para enviar mensagens
-    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+    // Ativar polling para receber callback_query (clicks nos botões)
+    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
     CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-    console.log('✅ Telegram Bot inicializado (modo webhook/manual)');
+    console.log('✅ Telegram Bot inicializado com polling');
+    
+    // Listener para callback_query (quando clica nos botões)
+    bot.on('callback_query', async (query) => {
+      try {
+        const chatId = query.message.chat.id;
+        const callbackData = query.data;
+        
+        // Extrair status e número do pedido
+        let status = '';
+        let orderNumber = '';
+        
+        if (callbackData.startsWith('preparo_')) {
+          status = 'preparo';
+          orderNumber = callbackData.replace('preparo_', '');
+        } else if (callbackData.startsWith('saiu_entrega_')) {
+          status = 'saiu_entrega';
+          orderNumber = callbackData.replace('saiu_entrega_', '');
+        } else if (callbackData.startsWith('pronto_retirada_')) {
+          status = 'pronto_retirada';
+          orderNumber = callbackData.replace('pronto_retirada_', '');
+        }
+        
+        // Carregar dados do pedido
+        const ordersData = loadOrdersData();
+        const orderData = ordersData[orderNumber];
+        
+        if (!orderData) {
+          await bot.answerCallbackQuery(query.id, {
+            text: '❌ Pedido não encontrado!',
+            show_alert: true
+          });
+          return;
+        }
+        
+        const whatsappSanitized = orderData.whatsapp;
+        const clientName = orderData.name || 'Cliente';
+        
+        // Responder ao callback query
+        await bot.answerCallbackQuery(query.id, {
+          text: '✅ Status atualizado!',
+          show_alert: false
+        });
+        
+        // Definir mensagem conforme o status
+        let messageText = '';
+        if (status === 'preparo') {
+          messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
+        } else if (status === 'saiu_entrega') {
+          messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— AutomaLanches`;
+        } else if (status === 'pronto_retirada') {
+          messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
+        }
+        
+        // Enviar mensagem com botão do WhatsApp
+        await bot.sendMessage(chatId, messageText, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '📲 Abrir WhatsApp do cliente',
+                  url: `https://wa.me/${whatsappSanitized}`
+                }
+              ]
+            ]
+          }
+        });
+        
+      } catch (error) {
+        console.error('Erro no callback_query:', error);
+        await bot.answerCallbackQuery(query.id, {
+          text: '❌ Erro ao processar!',
+          show_alert: true
+        });
+      }
+    });
   } catch (error) {
     console.error('⚠️ Erro ao inicializar Telegram Bot:', error.message);
     console.log('⚠️ Servidor continuará sem integração Telegram');
