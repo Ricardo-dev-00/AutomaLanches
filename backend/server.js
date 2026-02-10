@@ -115,7 +115,7 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         if (status === 'preparo') {
           messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
         } else if (status === 'saiu_entrega') {
-          messageText = `🚴 *Saiu para entrega*\n\nOlá, ${clientName}! 🚴\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você!\n\nQualquer dúvida, é só chamar 😉\n— AutomaLanches`;
+          messageText = `*Saiu para entrega!*\n\nOlá, ${clientName}! 👋\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você! 🍔😋\n\nDesejamos uma ótima refeição!\n— AutomaLanches`;
         } else if (status === 'pronto_retirada') {
           messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
         }
