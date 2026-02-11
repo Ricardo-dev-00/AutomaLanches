@@ -404,7 +404,7 @@ const Checkout = ({ onBack, onContinue }) => {
                               if (formData.changeFor) {
                                 const changeValue = parseFloat(formData.changeFor.replace('R$', '').replace('.', '').replace(',', '.'));
                                 if (changeValue < cartTotal) {
-                                  setErrorMessage(`⚠️ O valor informado para troco deve ser maior que o valor total do pedido (${cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
+                                  setErrorMessage(`O valor informado para troco deve ser maior que o valor total do pedido (${cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
                                   return;
                                 }
                                 setChangeConfirmed(true);
