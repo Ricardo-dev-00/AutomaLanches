@@ -111,13 +111,16 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         });
         
         // Definir mensagem conforme o status
+        const frontendUrl = process.env.FRONTEND_URL || 'https://automalanches.com';
+        const repeatOrderLink = `${frontendUrl}/?repeatOrder=${orderNumber}`;
+        
         let messageText = '';
         if (status === 'preparo') {
           messageText = `🍳 *Em preparo*\n\nOlá, ${clientName}! 😊\n\nSeu pedido *#${orderNumber}* já está em preparo 🍳\nQuando sair para entrega, a gente te avisa aqui 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
         } else if (status === 'saiu_entrega') {
-          messageText = `*Saiu para entrega!*\n\nOlá, ${clientName}! 👋\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você! 🍔😋\n\nDesejamos uma ótima refeição!\n— AutomaLanches`;
+          messageText = `*Saiu para entrega!*\n\nOlá, ${clientName}! 👋\n\nSeu pedido *#${orderNumber}* já saiu para entrega\nEm breve ele chega até você! 🍔😋\n\nDesejamos uma ótima refeição!\n\nGostou do seu último pedido? 😍\nRepita agora mesmo com apenas um clique:\n📲 ${repeatOrderLink}\n\n— AutomaLanches`;
         } else if (status === 'pronto_retirada') {
-          messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
+          messageText = `🏪 *Pronto para retirada*\n\nOlá, ${clientName}! 🏪\n\nSeu pedido *#${orderNumber}* já está pronto para retirada!\nPode vir buscar quando quiser 😉\n\nGostou do seu último pedido? 😍\nRepita agora mesmo com apenas um clique:\n📲 ${repeatOrderLink}\n\nQualquer dúvida, é só chamar!\n— AutomaLanches`;
         }
         
         // Enviar mensagem com botão do WhatsApp
@@ -171,12 +174,13 @@ function loadOrdersData() {
 }
 
 // Função para salvar dados do pedido
-function saveOrderData(orderNumber, whatsappSanitized, clientName) {
+function saveOrderData(orderNumber, whatsappSanitized, clientName, items = []) {
   try {
     const ordersData = loadOrdersData();
     ordersData[orderNumber] = {
       whatsapp: whatsappSanitized,
       name: clientName,
+      items: items,
       timestamp: new Date().toISOString()
     };
     fs.writeFileSync(ORDERS_DATA_FILE, JSON.stringify(ordersData, null, 2));
@@ -222,6 +226,46 @@ app.get('/api/status', (req, res) => {
     telegram: bot ? 'configurado' : 'não configurado',
     timestamp: new Date().toISOString()
   });
+});
+
+// Rota para recuperar itens de um pedido anterior (para repetir pedido)
+app.get('/api/order/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const ordersData = loadOrdersData();
+    
+    if (!ordersData[id]) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Pedido não encontrado',
+        error: 'ORDER_NOT_FOUND'
+      });
+    }
+    
+    const orderData = ordersData[id];
+    
+    // Validar se há itens salvos
+    if (!orderData.items || orderData.items.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Itens do pedido não encontrados',
+        error: 'ORDER_ITEMS_NOT_FOUND'
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      orderNumber: id,
+      items: orderData.items
+    });
+  } catch (error) {
+    console.error('Erro ao recuperar pedido:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro ao recuperar pedido',
+      error: error.message 
+    });
+  }
 });
 
 // Rota para gerar código Pix
@@ -390,8 +434,8 @@ app.post('/api/send-order', async (req, res) => {
       reply_markup: inlineKeyboard
     });
     
-    // Salvar dados do pedido para uso no callback_query
-    saveOrderData(orderNumber, whatsappSanitized, name);
+    // Salvar dados do pedido para uso no callback_query (incluindo itens para repetição)
+    saveOrderData(orderNumber, whatsappSanitized, name, items);
     
     res.json({ 
       success: true, 

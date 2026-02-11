@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CategoryFilter from './components/CategoryFilter';
@@ -23,7 +23,31 @@ function App() {
   const [orderNumber, setOrderNumber] = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   
-  const { items, deliveryFee, getTotalWithDelivery, clearCart } = useCartStore();
+  const { items, deliveryFee, getTotalWithDelivery, clearCart, setItems, openCart } = useCartStore();
+  
+  // Processar query string para repetição de pedido
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const repeatOrderId = params.get('repeatOrder');
+    
+    if (repeatOrderId) {
+      // Buscar itens do pedido anterior
+      fetch(`/api/order/${repeatOrderId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.items) {
+            // Limpar carrinho e adicionar itens do pedido anterior
+            clearCart();
+            setItems(data.items);
+            openCart();
+            
+            // Remover o parâmetro da URL para não tentar carregar novamente
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        })
+        .catch(error => console.error('Erro ao carregar pedido anterior:', error));
+    }
+  }, []);
   
   // Função para resetar para home
   const handleResetToHome = () => {

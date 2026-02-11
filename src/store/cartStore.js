@@ -52,6 +52,10 @@ const useCartStore = create(
       },
       
       clearCart: () => set({ items: [] }),
+
+      setItems: (items) => {
+        set({ items });
+      },
       
       toggleCart: () => set({ isOpen: !get().isOpen }),
       
