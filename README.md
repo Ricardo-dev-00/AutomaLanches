@@ -317,16 +317,26 @@ Seu pedido #[Número] já saiu para entrega
 Em breve ele chega até você! 🍔😋
 
 Desejamos uma ótima refeição!
+
+Gostou do seu último pedido? 😍
+Repita agora mesmo com apenas um clique:
+📲 https://seu-dominio.com/?repeatOrder=[Número]
 ```
 
 **Pronto para retirada:**
 ```
+🏪 Pronto para retirada
+
 Olá [Nome do Cliente]! 🏪
 
-Seu pedido #[Número] já está pronto para retirada.
+Seu pedido #[Número] já está pronto para retirada!
 Pode vir buscar quando quiser 😉
 
-Obrigado!
+Gostou do seu último pedido? 😍
+Repita agora mesmo com apenas um clique:
+📲 https://seu-dominio.com/?repeatOrder=[Número]
+
+Qualquer dúvida, é só chamar!
 ```
 
 ### ✨ Vantagens
@@ -338,7 +348,24 @@ Obrigado!
 - ✅ **Mobile-friendly** - Botões espaçados para evitar cliques acidentais
 - ✅ **Profissional** - Melhora a experiência do cliente
 
-### 📐 Design Responsivo
+### � Repetição de Pedidos
+
+Quando o pedido "**Saiu para entrega**" ou "**Pronto para retirada**", a mensagem inclui um **link especial** que permite ao cliente repetir o pedido com apenas um clique:
+
+**Como funciona:**
+
+1. Cliente recebe a mensagem de status no WhatsApp
+2. Clica no link `📲 https://seu-dominio.com/?repeatOrder=[Número]`
+3. Site abre e **carrinho carrega automaticamente** com os itens do pedido anterior
+4. Cliente pode **confirmar o pedido imediatamente** ou modificar itens
+
+**Benefícios:**
+- ✅ **Aumenta recompras** - Cliente volta facilmente
+- ✅ **Menos passos** - Não precisa navegar pelo menu inteiro
+- ✅ **Conversão rápida** - De 1 clique para novo pedido
+- ✅ **Melhor UX** - Atende pedidos frequentes eficientemente
+
+### �📐 Design Responsivo
 
 Os botões são exibidos **um por linha** para:
 - Evitar cliques acidentais no celular

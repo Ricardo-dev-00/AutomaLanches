@@ -130,6 +130,7 @@ const Checkout = ({ onBack, onContinue }) => {
       changeFor: ''
     });
     setChangeConfirmed(false);
+    setErrorMessage('');
   };
   
   const handleSubmit = (e) => {
@@ -474,7 +475,11 @@ const Checkout = ({ onBack, onContinue }) => {
               {/* Botão Continuar */}
               <button
                 type="submit"
-                className="btn-primary w-full text-lg"
+                className={`btn-primary w-full text-lg ${
+                  formData.paymentMethod === 'dinheiro' && !changeConfirmed
+                    ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300'
+                    : ''
+                }`}
               >
                 Confirmar pedido {cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </button>
