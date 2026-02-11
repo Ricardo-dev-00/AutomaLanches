@@ -339,8 +339,8 @@ app.post('/api/send-order', async (req, res) => {
       `🍔 *NOVO PEDIDO #${orderNumber}*\n\n` +
       `📆 ${orderDateText}\n` +
       `🕒 ${orderTimeText}\n\n` +
-      `*Tipo:* ${deliveryTypeText}\n\n` +
-      `*Cliente:* ${name}\n` +
+      `🚚 *Tipo:* ${deliveryTypeText}\n\n` +
+      `👤 *Cliente:* ${name}\n` +
       `📲 *WhatsApp:* ${whatsapp}\n\n` +
       `📦 *Itens:*\n` +
       `${itemsList}\n\n` +
