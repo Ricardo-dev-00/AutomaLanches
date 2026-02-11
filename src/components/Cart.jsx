@@ -1,4 +1,4 @@
-import { FaTimes, FaPlus, FaMinus, FaTrash } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaMinus, FaTrash, FaMotorcycle, FaStore } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 
 const Cart = ({ onCheckout }) => {
@@ -110,6 +110,13 @@ const Cart = ({ onCheckout }) => {
                   </div>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={closeCart}
+                className="block w-full text-center text-[#EA1D2C] font-semibold text-sm hover:underline focus:outline-none"
+              >
+                Adicionar mais itens
+              </button>
             </div>
           )}
         </div>
@@ -123,23 +130,25 @@ const Cart = ({ onCheckout }) => {
                 <button
                   type="button"
                   onClick={() => setDeliveryType('delivery')}
-                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                     deliveryType === 'delivery'
                       ? 'border-primary bg-card'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
+                  <FaMotorcycle size={14} />
                   Entrega
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeliveryType('pickup')}
-                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                     deliveryType === 'pickup'
                       ? 'border-primary bg-card'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
+                  <FaStore size={14} />
                   Retirada
                 </button>
               </div>

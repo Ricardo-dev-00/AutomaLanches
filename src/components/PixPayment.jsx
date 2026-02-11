@@ -12,7 +12,7 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
   const total = getTotalWithDelivery();
   
   const pixKey = import.meta.env.VITE_PIX_KEY || 'suachavepix@email.com';
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5598985881871';
   
   // Gerar código Pix ao montar componente
   useEffect(() => {

@@ -330,9 +330,15 @@ app.post('/api/send-order', async (req, res) => {
       }
     }
     
+    const orderDate = new Date();
+    const orderDateText = orderDate.toLocaleDateString('pt-BR');
+    const orderTimeText = orderDate.toLocaleTimeString('pt-BR');
+
     // Mensagem do pedido - SEM ESPAÇOS INVISÍVEIS
     const message = 
       `🍔 *NOVO PEDIDO #${orderNumber}*\n\n` +
+      `📆 ${orderDateText}\n` +
+      `🕒 ${orderTimeText}\n\n` +
       `*Tipo:* ${deliveryTypeText}\n\n` +
       `*Cliente:* ${name}\n` +
       `📲 *WhatsApp:* ${whatsapp}\n\n` +
