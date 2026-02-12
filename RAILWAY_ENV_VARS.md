@@ -10,6 +10,7 @@ TELEGRAM_CHAT_ID=7338581474
 PIX_KEY=ff73bed8-76ca-4044-999b-41b2667858b3
 MERCHANT_NAME=AutomaLanches
 MERCHANT_CITY=Sao Luis
+FRONTEND_URL=https://automalanches-production.up.railway.app
 ```
 
 ## Como adicionar no Railway:

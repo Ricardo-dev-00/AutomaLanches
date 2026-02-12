@@ -111,8 +111,8 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         });
         
         // Definir mensagem conforme o status
-        const frontendUrl = process.env.FRONTEND_URL || 'https://automalanches.com';
-        const repeatOrderLink = `${frontendUrl}/?repeatOrder=${orderNumber}`;
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://automalanches-production.up.railway.app').replace(/\/$/, '');
+        const repeatOrderLink = `${frontendBaseUrl}/?repeatOrder=${orderNumber}`;
         
         let messageText = '';
         if (status === 'preparo') {
