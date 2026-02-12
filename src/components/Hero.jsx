@@ -1,4 +1,4 @@
-import { FaInstagram, FaFacebook, FaTwitter, FaWhatsapp } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaWhatsapp } from 'react-icons/fa';
 
 const Hero = () => {
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5598985881871';
@@ -55,15 +55,6 @@ const Hero = () => {
               title="Facebook"
             >
               <FaFacebook size={28} />
-            </a>
-            <a 
-              href="https://twitter.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-white bg-[#1DA1F2] p-3 rounded-full hover:brightness-110 transition-all transform hover:scale-110 shadow-lg"
-              title="Twitter"
-            >
-              <FaTwitter size={28} />
             </a>
             <a 
               href={lanchoneteWhatsApp}

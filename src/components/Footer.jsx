@@ -1,4 +1,4 @@
-import { FaInstagram, FaFacebook, FaTwitter, FaWhatsapp, FaMapMarkerAlt, FaClock, FaEnvelope } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaWhatsapp, FaMapMarkerAlt, FaClock, FaEnvelope } from 'react-icons/fa';
 
 const Footer = () => {
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5598985881871';
@@ -67,15 +67,6 @@ const Footer = () => {
                 title="Facebook"
               >
                 <FaFacebook size={20} />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-[#1DA1F2] p-3 rounded-full hover:brightness-110 transition-all transform hover:scale-110"
-                title="Twitter"
-              >
-                <FaTwitter size={20} />
               </a>
               <a 
                 href={lanchoneteWhatsApp}
