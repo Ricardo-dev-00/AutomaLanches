@@ -17,6 +17,96 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const BUSINESS_TIMEZONE = process.env.BUSINESS_TIMEZONE || 'America/Fortaleza';
+const WEEKDAY_NAMES = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const BUSINESS_SCHEDULE = {
+  0: { open: '18:00', close: '00:00' },
+  1: { open: '18:00', close: '23:00' },
+  2: { open: '18:00', close: '23:00' },
+  3: { open: '18:00', close: '23:00' },
+  4: { open: '18:00', close: '23:00' },
+  5: { open: '18:00', close: '23:00' },
+  6: { open: '18:00', close: '00:00' }
+};
+
+function toMinutes(timeString) {
+  const [hour, minute] = timeString.split(':').map(Number);
+  return (hour * 60) + minute;
+}
+
+function getZonedDateParts(timeZone) {
+  const formatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const weekdayPart = parts.find(part => part.type === 'weekday')?.value?.toLowerCase().replace('.', '');
+  const hour = Number(parts.find(part => part.type === 'hour')?.value || 0);
+  const minute = Number(parts.find(part => part.type === 'minute')?.value || 0);
+
+  const weekdayMap = {
+    dom: 0,
+    seg: 1,
+    ter: 2,
+    qua: 3,
+    qui: 4,
+    sex: 5,
+    sáb: 6,
+    sab: 6
+  };
+
+  return {
+    weekday: weekdayMap[weekdayPart] ?? new Date().getDay(),
+    currentMinutes: (hour * 60) + minute
+  };
+}
+
+function isBusinessOpen(schedule, timeZone) {
+  const { weekday, currentMinutes } = getZonedDateParts(timeZone);
+  const todayWindow = schedule[weekday];
+
+  if (!todayWindow) {
+    return false;
+  }
+
+  const openMinutes = toMinutes(todayWindow.open);
+  const closeMinutes = toMinutes(todayWindow.close);
+
+  if (closeMinutes > openMinutes) {
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  }
+
+  if (closeMinutes < openMinutes) {
+    return currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+  }
+
+  return false;
+}
+
+function getBusinessHoursText(schedule) {
+  const sameWeekdayWindow = [1, 2, 3, 4, 5].every(day => {
+    const config = schedule[day];
+    return config && config.open === '18:00' && config.close === '23:00';
+  });
+
+  const sameWeekendWindow = [0, 6].every(day => {
+    const config = schedule[day];
+    return config && config.open === '18:00' && config.close === '00:00';
+  });
+
+  if (sameWeekdayWindow && sameWeekendWindow) {
+    return 'Segunda a sexta: 18h às 23h | Sábado e domingo: 18h às 00h';
+  }
+
+  return Object.entries(schedule)
+    .map(([day, config]) => `${WEEKDAY_NAMES[Number(day)]}: ${config.open} às ${config.close}`)
+    .join(' | ');
+}
+
 // Middlewares - ordem importa para performance
 app.use(compression()); // Comprimir respostas
 
@@ -315,6 +405,14 @@ function sanitizeWhatsAppNumber(phone) {
 // Rota para enviar pedido ao Telegram
 app.post('/api/send-order', async (req, res) => {
   try {
+    if (!isBusinessOpen(BUSINESS_SCHEDULE, BUSINESS_TIMEZONE)) {
+      return res.status(403).json({
+        success: false,
+        message: `Estamos fechados no momento. Horário de funcionamento: ${getBusinessHoursText(BUSINESS_SCHEDULE)}.`,
+        error: 'ESTABLISHMENT_CLOSED'
+      });
+    }
+
     // Verificar se o Telegram está configurado
     if (!bot || !CHAT_ID) {
       return res.status(503).json({ 

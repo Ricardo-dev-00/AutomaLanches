@@ -138,7 +138,7 @@ function App() {
       setCurrentPage('confirmation');
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
-      alert('Erro ao enviar pedido. Por favor, tente novamente.');
+      alert(error.message || 'Erro ao enviar pedido. Por favor, tente novamente.');
     }
   };
   

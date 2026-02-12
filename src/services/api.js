@@ -25,9 +25,18 @@ export const sendOrderToTelegram = async (orderData) => {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erro da API:', errorText);
-      throw new Error(`Erro ${response.status}: ${errorText}`);
+      let errorMessage = 'Erro ao processar pedido.';
+
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+
+      console.error('❌ Erro da API:', errorMessage);
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
