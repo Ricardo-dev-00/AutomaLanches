@@ -152,9 +152,15 @@ const Checkout = ({ onBack, onContinue }) => {
       setErrorMessage('Por favor, digite um número de WhatsApp válido.');
       return;
     }
+
+    // Verificar se informou o valor para troco quando necessário
+    if (formData.paymentMethod === 'dinheiro' && formData.needsChange && !formData.changeFor.trim()) {
+      setErrorMessage('Por favor, preencha o valor para troco.');
+      return;
+    }
     
     // Verificar se precisa confirmar a questão do troco
-    if (formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && !changeConfirmed) {
+    if (formData.paymentMethod === 'dinheiro' && !changeConfirmed) {
       setErrorMessage('Por favor, informe no campo acima se precisará de troco ou não.');
       return;
     }
@@ -341,8 +347,8 @@ const Checkout = ({ onBack, onContinue }) => {
                 </div>
               )}
               
-              {/* Troco (apenas se dinheiro e entrega) */}
-              {formData.paymentMethod === 'dinheiro' && deliveryType === 'delivery' && (
+              {/* Troco (apenas se dinheiro) */}
+              {formData.paymentMethod === 'dinheiro' && (
                 <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
                   <h3 className="font-semibold mb-3 text-lg">Precisa de troco?</h3>
                   <div className="space-y-3">
@@ -402,7 +408,7 @@ const Checkout = ({ onBack, onContinue }) => {
                           <button
                             type="button"
                             onClick={() => {
-                              if (formData.changeFor) {
+                              if (formData.changeFor.trim()) {
                                 const changeValue = parseFloat(formData.changeFor.replace('R$', '').replace('.', '').replace(',', '.'));
                                 if (changeValue < cartTotal) {
                                   setErrorMessage(`O valor informado para troco deve ser maior que o valor total do pedido (${cartTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
@@ -411,11 +417,10 @@ const Checkout = ({ onBack, onContinue }) => {
                                 setChangeConfirmed(true);
                                 setErrorMessage('');
                               } else {
-                                setErrorMessage('Por favor, informe o valor para troco');
+                                setErrorMessage('Por favor, preencha o valor para troco.');
                               }
                             }}
-                            disabled={!formData.changeFor}
-                            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn-primary w-full"
                           >
                             ✓ Confirmar Troco
                           </button>
