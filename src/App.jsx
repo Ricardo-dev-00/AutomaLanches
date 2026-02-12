@@ -87,9 +87,10 @@ function App() {
     setCurrentPage('checkout');
   };
   
-  // Voltar para home
-  const handleBackToHome = () => {
+  // Voltar do checkout para o carrinho
+  const handleBackToCart = () => {
     setCurrentPage('home');
+    openCart();
   };
   
   // Continuar do checkout
@@ -221,7 +222,7 @@ function App() {
       {currentPage === 'checkout' && (
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
           <Checkout 
-            onBack={handleBackToHome}
+            onBack={handleBackToCart}
             onContinue={handleContinueFromCheckout}
           />
         </Suspense>
