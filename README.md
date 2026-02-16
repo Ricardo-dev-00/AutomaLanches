@@ -45,7 +45,6 @@ Integração completa com bot do Telegram para gerenciamento de pedidos em tempo
 
 ---
 
-## 🎯 Funcionalidades
 
 ## 🎯 Funcionalidades
 
