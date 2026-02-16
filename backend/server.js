@@ -66,6 +66,17 @@ function getZonedDateParts(timeZone) {
 }
 
 function isBusinessOpen(schedule, timeZone) {
+  // 1º) Verificar override manual para FORÇAR ABERTO
+  if (process.env.FORCE_OPEN === 'true') {
+    return true;
+  }
+
+  // 2º) Verificar override manual para FORÇAR FECHADO
+  if (process.env.FORCE_CLOSED === 'true') {
+    return false;
+  }
+
+  // 3º) Se não tem override, usar horário automático normal
   const { weekday, currentMinutes } = getZonedDateParts(timeZone);
   const todayWindow = schedule[weekday];
 
