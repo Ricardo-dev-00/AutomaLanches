@@ -249,6 +249,10 @@ function App() {
             orderData={orderData}
             onBack={handleBackFromPix}
             onConfirm={handleConfirmOrder}
+            onClosed={() => {
+              setCurrentPage('home');
+              setShowClosedNotification(true);
+            }}
           />
         </Suspense>
       )}

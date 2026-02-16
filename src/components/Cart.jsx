@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { FaTimes, FaPlus, FaMinus, FaTrash, FaMotorcycle, FaStore } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
+import { fetchStatus } from '../services/api';
 
 const Cart = ({ onCheckout }) => {
   const {
@@ -20,6 +22,41 @@ const Cart = ({ onCheckout }) => {
   const total = getTotalWithDelivery();
   const minimumOrder = 20;
   const isMinimumMet = subtotal >= minimumOrder;
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [businessStatus, setBusinessStatus] = useState({
+    isOpen: null,
+    businessHours: ''
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    let intervalId = null;
+
+    const loadStatus = async () => {
+      setStatusLoading(true);
+      const data = await fetchStatus();
+      if (isMounted && data) {
+        setBusinessStatus({
+          isOpen: data.isOpen,
+          businessHours: data.businessHours
+        });
+      }
+      if (isMounted) {
+        setStatusLoading(false);
+      }
+    };
+
+    loadStatus();
+    intervalId = setInterval(loadStatus, 60000);
+
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isOpen]);
   
   if (!isOpen) return null;
   
@@ -35,7 +72,26 @@ const Cart = ({ onCheckout }) => {
       <div className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-50 shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold">Meu Carrinho</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold">Meu Carrinho</h2>
+            <span
+              className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                statusLoading || businessStatus.isOpen === null
+                  ? 'bg-gray-100 text-gray-600'
+                  : businessStatus.isOpen
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+              }`}
+            >
+              {statusLoading
+                ? 'Verificando...'
+                : businessStatus.isOpen === null
+                  ? 'Status indisponível'
+                  : businessStatus.isOpen
+                    ? 'Aberto agora'
+                    : 'Fechado agora'}
+            </span>
+          </div>
           <button
             onClick={closeCart}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -44,6 +100,12 @@ const Cart = ({ onCheckout }) => {
             <FaTimes size={20} />
           </button>
         </div>
+
+        {businessStatus.businessHours && (
+          <div className="px-4 py-2 text-xs text-textSecondary bg-gray-50 border-b">
+            Horário: {businessStatus.businessHours}
+          </div>
+        )}
         
         {/* Lista de Itens */}
         <div className="flex-1 overflow-y-auto p-4">

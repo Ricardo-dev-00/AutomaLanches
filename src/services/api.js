@@ -11,6 +11,20 @@ const getApiUrl = () => {
 
 const API_URL = import.meta.env.VITE_API_URL || getApiUrl();
 
+export const fetchStatus = async () => {
+  try {
+    const baseUrl = getApiUrl();
+    const url = baseUrl ? `${baseUrl}/api/status` : '/api/status';
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
 export const sendOrderToTelegram = async (orderData) => {
   try {
     const baseUrl = getApiUrl();

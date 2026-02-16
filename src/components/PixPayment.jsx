@@ -3,7 +3,7 @@ import { FaArrowLeft, FaCopy, FaCheck, FaWhatsapp, FaRocket } from 'react-icons/
 import useCartStore from '../store/cartStore';
 import QRCode from 'qrcode';
 
-const PixPayment = ({ orderData, onBack, onConfirm }) => {
+const PixPayment = ({ orderData, onBack, onConfirm, onClosed }) => {
   const [copied, setCopied] = useState(false);
   const [pixCode, setPixCode] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -31,6 +31,26 @@ const PixPayment = ({ orderData, onBack, onConfirm }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ value: total })
         });
+        
+        if (!response.ok) {
+          let errorMessage = 'Erro ao gerar código Pix.';
+
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+
+          if (errorMessage.includes('Estamos fechados')) {
+            onClosed?.();
+            return;
+          }
+
+          console.error('Erro ao gerar Pix:', errorMessage);
+          return;
+        }
         
         const data = await response.json();
         if (data.success) {

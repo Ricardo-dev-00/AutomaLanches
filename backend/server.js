@@ -348,10 +348,13 @@ app.get('/health', (req, res) => {
 
 // Rota de status da API (apenas para testes)
 app.get('/api/status', (req, res) => {
+  const isOpen = isBusinessOpen(BUSINESS_SCHEDULE, BUSINESS_TIMEZONE);
   res.json({ 
     message: 'API AutomaLanches funcionando!',
     status: 'online',
     telegram: bot ? 'configurado' : 'não configurado',
+    isOpen,
+    businessHours: getBusinessHoursText(BUSINESS_SCHEDULE),
     timestamp: new Date().toISOString()
   });
 });
@@ -399,6 +402,14 @@ app.get('/api/order/:id', (req, res) => {
 // Rota para gerar código Pix
 app.post('/api/generate-pix', (req, res) => {
   try {
+    if (!isBusinessOpen(BUSINESS_SCHEDULE, BUSINESS_TIMEZONE)) {
+      return res.status(403).json({
+        success: false,
+        message: `Estamos fechados no momento. Horário de funcionamento: ${getBusinessHoursText(BUSINESS_SCHEDULE)}.`,
+        error: 'ESTABLISHMENT_CLOSED'
+      });
+    }
+
     const { value } = req.body;
     
     const pixKey = process.env.PIX_KEY || 'suachavepix@email.com';
