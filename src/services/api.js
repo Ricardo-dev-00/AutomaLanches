@@ -35,14 +35,18 @@ export const sendOrderToTelegram = async (orderData) => {
         errorMessage = errorText || errorMessage;
       }
 
-      console.error('❌ Erro da API:', errorMessage);
+      // Apenas log para estabelecimento fechado
+      if (errorMessage.includes('Estamos fechados')) {
+        console.info('ℹ️ Loja fechada:', errorMessage);
+      }
+      
       throw new Error(errorMessage);
     }
     
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('❌ Erro ao enviar pedido:', error);
+    // Não logar erros conhecidos aqui (já logados acima)
     throw error;
   }
 };

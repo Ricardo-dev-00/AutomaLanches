@@ -15,6 +15,7 @@ const OrderConfirmation = lazy(() => import('./components/OrderConfirmation'));
 import { products, categories } from './data/products';
 import { sendOrderToTelegram } from './services/api';
 import useCartStore from './store/cartStore';
+import ClosedNotification from './components/ClosedNotification';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -22,6 +23,7 @@ function App() {
   const [orderData, setOrderData] = useState(null);
   const [orderNumber, setOrderNumber] = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [showClosedNotification, setShowClosedNotification] = useState(false);
   
   const { items, deliveryFee, getTotalWithDelivery, clearCart, setItems, openCart } = useCartStore();
   
@@ -137,8 +139,15 @@ function App() {
       
       setCurrentPage('confirmation');
     } catch (error) {
-      console.error('Erro ao enviar pedido:', error);
-      alert(error.message || 'Erro ao enviar pedido. Por favor, tente novamente.');
+      // Verificar se é erro de estabelecimento fechado
+      if (error.message && error.message.includes('Estamos fechados')) {
+        setCurrentPage('home'); // Voltar para home para mostrar a notificação
+        setShowClosedNotification(true);
+      } else {
+        // Para outros erros reais, logar e mostrar alert
+        console.error('Erro ao enviar pedido:', error);
+        alert(error.message || 'Erro ao enviar pedido. Por favor, tente novamente.');
+      }
     }
   };
   
@@ -153,6 +162,12 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <Header onLogoClick={handleResetToHome} />
+      
+      {showClosedNotification && (
+        <ClosedNotification 
+          onDismiss={() => setShowClosedNotification(false)}
+        />
+      )}
       
       {currentPage === 'home' && (
         <>
