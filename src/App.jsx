@@ -229,7 +229,10 @@ function App() {
           
           <Footer />
           
-          <Cart onCheckout={handleCheckout} />
+          <Cart 
+            onCheckout={handleCheckout}
+            onShowClosed={() => setShowClosedNotification(true)}
+          />
           <CartButton />
         </>
       )}
@@ -249,10 +252,6 @@ function App() {
             orderData={orderData}
             onBack={handleBackFromPix}
             onConfirm={handleConfirmOrder}
-            onClosed={() => {
-              setCurrentPage('home');
-              setShowClosedNotification(true);
-            }}
           />
         </Suspense>
       )}

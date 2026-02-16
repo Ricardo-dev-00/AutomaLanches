@@ -3,7 +3,7 @@ import { FaTimes, FaPlus, FaMinus, FaTrash, FaMotorcycle, FaStore } from 'react-
 import useCartStore from '../store/cartStore';
 import { fetchStatus } from '../services/api';
 
-const Cart = ({ onCheckout }) => {
+const Cart = ({ onCheckout, onShowClosed }) => {
   const {
     items,
     isOpen,
@@ -241,7 +241,15 @@ const Cart = ({ onCheckout }) => {
               </span>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
+                // Verificar se está aberto antes de continuar
+                const status = await fetchStatus();
+                if (status && !status.isOpen) {
+                  closeCart();
+                  onShowClosed?.();
+                  return;
+                }
+                
                 closeCart();
                 onCheckout();
               }}
