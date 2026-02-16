@@ -37,6 +37,7 @@ const Cart = ({ onCheckout, onShowClosed }) => {
       setStatusLoading(true);
       const data = await fetchStatus();
       if (isMounted && data) {
+        console.log('🛒 Carrinho - Status recebido:', { isOpen: data.isOpen, manualOverride: data.manualOverride });
         setBusinessStatus({
           isOpen: data.isOpen,
           businessHours: data.businessHours

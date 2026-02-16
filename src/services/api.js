@@ -14,13 +14,23 @@ const API_URL = import.meta.env.VITE_API_URL || getApiUrl();
 export const fetchStatus = async () => {
   try {
     const baseUrl = getApiUrl();
-    const url = baseUrl ? `${baseUrl}/api/status` : '/api/status';
-    const response = await fetch(url);
+    // Adicionar timestamp para evitar cache
+    const timestamp = new Date().getTime();
+    const url = baseUrl ? `${baseUrl}/api/status?t=${timestamp}` : `/api/status?t=${timestamp}`;
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    });
     if (!response.ok) {
       return null;
     }
-    return await response.json();
-  } catch {
+    const data = await response.json();
+    console.log('📊 Status da loja:', data.isOpen ? 'ABERTA' : 'FECHADA', data.manualOverride ? `(${data.manualOverride})` : '');
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar status:', error);
     return null;
   }
 };

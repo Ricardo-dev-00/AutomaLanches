@@ -359,12 +359,22 @@ app.get('/health', (req, res) => {
 
 // Rota de status da API (apenas para testes)
 app.get('/api/status', (req, res) => {
+  // Impedir cache para sempre pegar status atualizado
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
   const isOpen = isBusinessOpen(BUSINESS_SCHEDULE, BUSINESS_TIMEZONE);
+  const manualOverride = process.env.FORCE_OPEN === 'true' ? 'FORCE_OPEN' : 
+                         process.env.FORCE_CLOSED === 'true' ? 'FORCE_CLOSED' : 
+                         null;
+  
   res.json({ 
     message: 'API AutomaLanches funcionando!',
     status: 'online',
     telegram: bot ? 'configurado' : 'não configurado',
     isOpen,
+    manualOverride,
     businessHours: getBusinessHoursText(BUSINESS_SCHEDULE),
     timestamp: new Date().toISOString()
   });
