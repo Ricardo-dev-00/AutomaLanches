@@ -279,6 +279,44 @@ function saveOrderData(orderNumber, whatsappSanitized, clientName, items = []) {
   }
 }
 
+// Função para formatar data/hora com timezone correto
+function formatDateTimeByTimezone(date, timezone) {
+  try {
+    const formatter = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const parts = formatter.formatToParts(date);
+    const dateObj = {
+      day: parts.find(p => p.type === 'day').value,
+      month: parts.find(p => p.type === 'month').value,
+      year: parts.find(p => p.type === 'year').value,
+      hour: parts.find(p => p.type === 'hour').value,
+      minute: parts.find(p => p.type === 'minute').value,
+      second: parts.find(p => p.type === 'second').value
+    };
+    
+    return {
+      date: `${dateObj.day}/${dateObj.month}/${dateObj.year}`,
+      time: `${dateObj.hour}:${dateObj.minute}:${dateObj.second}`
+    };
+  } catch (error) {
+    console.error('Erro ao formatar data/hora:', error);
+    // Fallback para o método anterior em caso de erro
+    return {
+      date: date.toLocaleDateString('pt-BR'),
+      time: date.toLocaleTimeString('pt-BR')
+    };
+  }
+}
+
 // Função para gerar número do pedido único (contador simples começando do 1)
 function generateOrderNumber() {
   try {
@@ -472,9 +510,9 @@ app.post('/api/send-order', async (req, res) => {
       }
     }
     
+    // Formatar data/hora com timezone correto
     const orderDate = new Date();
-    const orderDateText = orderDate.toLocaleDateString('pt-BR');
-    const orderTimeText = orderDate.toLocaleTimeString('pt-BR');
+    const { date: orderDateText, time: orderTimeText } = formatDateTimeByTimezone(orderDate, BUSINESS_TIMEZONE);
 
     // Mensagem do pedido - SEM ESPAÇOS INVISÍVEIS
     const message = 
