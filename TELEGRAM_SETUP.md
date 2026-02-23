@@ -44,6 +44,38 @@ TELEGRAM_CHAT_ID=987654321
 2. Faça um pedido pelo sistema
 3. Verifique se a mensagem chegou no Telegram
 
+## Relatório automático de fechamento
+
+No horário de fechamento da lanchonete, o sistema envia automaticamente no Telegram uma mensagem de relatório com botões:
+
+- **📅 Relatório do dia**
+- **🗓️ Relatório do mês**
+
+Ao clicar, o bot retorna um resumo com:
+
+- Total de vendas
+- Total de pedidos
+- Ticket médio
+- Itens que mais saíram
+- Itens que menos saíram
+- Forma de pagamento mais escolhida
+
+> O cálculo usa o timezone definido em `BUSINESS_TIMEZONE` no `backend/.env`.
+
+## Comandos manuais de relatório
+
+Você também pode solicitar relatório a qualquer momento no Telegram:
+
+- `/ajuda` → mostra os comandos disponíveis
+- `/relatorio` → abre botões de relatório do dia e do mês
+- `/relatorio_dia` → envia relatório do dia atual
+- `/relatorio_mes` → envia relatório do mês atual
+
+Com período específico:
+
+- `/relatorio_dia 2026-02-23`
+- `/relatorio_mes 2026-02`
+
 ## Exemplo de Mensagem Recebida
 
 ```

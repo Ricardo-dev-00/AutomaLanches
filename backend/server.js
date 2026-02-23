@@ -28,6 +28,7 @@ const BUSINESS_SCHEDULE = {
   5: { open: '18:00', close: '23:00' },
   6: { open: '18:00', close: '00:00' }
 };
+const REPORT_CHECK_INTERVAL_MS = 30 * 1000;
 
 function toMinutes(timeString) {
   const [hour, minute] = timeString.split(':').map(Number);
@@ -38,6 +39,9 @@ function getZonedDateParts(timeZone) {
   const formatter = new Intl.DateTimeFormat('pt-BR', {
     timeZone,
     weekday: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false
@@ -45,6 +49,9 @@ function getZonedDateParts(timeZone) {
 
   const parts = formatter.formatToParts(new Date());
   const weekdayPart = parts.find(part => part.type === 'weekday')?.value?.toLowerCase().replace('.', '');
+  const year = Number(parts.find(part => part.type === 'year')?.value || 0);
+  const month = Number(parts.find(part => part.type === 'month')?.value || 0);
+  const day = Number(parts.find(part => part.type === 'day')?.value || 0);
   const hour = Number(parts.find(part => part.type === 'hour')?.value || 0);
   const minute = Number(parts.find(part => part.type === 'minute')?.value || 0);
 
@@ -61,6 +68,14 @@ function getZonedDateParts(timeZone) {
 
   return {
     weekday: weekdayMap[weekdayPart] ?? new Date().getDay(),
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    dateKey: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    monthKey: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}`,
+    minuteKey: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
     currentMinutes: (hour * 60) + minute
   };
 }
@@ -174,6 +189,32 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       try {
         const chatId = query.message.chat.id;
         const callbackData = query.data;
+
+        if (callbackData.startsWith('report_day_')) {
+          const dateKey = callbackData.replace('report_day_', '');
+
+          await bot.answerCallbackQuery(query.id, {
+            text: '📊 Gerando relatório do dia...',
+            show_alert: false
+          });
+
+          const reportMessage = buildSalesReport('day', dateKey);
+          await bot.sendMessage(chatId, reportMessage);
+          return;
+        }
+
+        if (callbackData.startsWith('report_month_')) {
+          const monthKey = callbackData.replace('report_month_', '');
+
+          await bot.answerCallbackQuery(query.id, {
+            text: '📊 Gerando relatório do mês...',
+            show_alert: false
+          });
+
+          const reportMessage = buildSalesReport('month', monthKey);
+          await bot.sendMessage(chatId, reportMessage);
+          return;
+        }
         
         // Extrair status e número do pedido
         let status = '';
@@ -188,6 +229,12 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         } else if (callbackData.startsWith('pronto_retirada_')) {
           status = 'pronto_retirada';
           orderNumber = callbackData.replace('pronto_retirada_', '');
+        } else {
+          await bot.answerCallbackQuery(query.id, {
+            text: '⚠️ Ação não reconhecida.',
+            show_alert: false
+          });
+          return;
         }
         
         // Carregar dados do pedido
@@ -247,6 +294,91 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         });
       }
     });
+
+    const sendReportMenu = async (chatId) => {
+      const nowInfo = getZonedDateParts(BUSINESS_TIMEZONE);
+      await bot.sendMessage(chatId, '📊 Relatório', {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '📅 Relatório do dia',
+                callback_data: `report_day_${nowInfo.dateKey}`
+              }
+            ],
+            [
+              {
+                text: '🗓️ Relatório do mês',
+                callback_data: `report_month_${nowInfo.monthKey}`
+              }
+            ]
+          ]
+        }
+      });
+    };
+
+    bot.on('message', async (msg) => {
+      try {
+        const text = String(msg?.text || '').trim();
+        if (!text.startsWith('/')) {
+          return;
+        }
+
+        const commandToken = text.split(/\s+/)[0].toLowerCase();
+        const normalizedCommand = commandToken.split('@')[0];
+
+        if (normalizedCommand === '/relatorio') {
+          await sendReportMenu(msg.chat.id);
+        }
+      } catch (error) {
+        console.error('Erro no fallback de comando /relatorio:', error);
+      }
+    });
+
+    bot.onText(/^\/relatorio_dia(?:@[\w_]+)?(?:\s+(\d{4}-\d{2}-\d{2}))?\s*$/i, async (msg, match) => {
+      try {
+        const chatId = msg.chat.id;
+
+        const dateKey = match?.[1] || getZonedDateParts(BUSINESS_TIMEZONE).dateKey;
+        const reportMessage = buildSalesReport('day', dateKey);
+        await bot.sendMessage(chatId, reportMessage);
+      } catch (error) {
+        console.error('Erro no comando /relatorio_dia:', error);
+      }
+    });
+
+    bot.onText(/^\/relatorio_mes(?:@[\w_]+)?(?:\s+(\d{4}-\d{2}))?\s*$/i, async (msg, match) => {
+      try {
+        const chatId = msg.chat.id;
+
+        const monthKey = match?.[1] || getZonedDateParts(BUSINESS_TIMEZONE).monthKey;
+        const reportMessage = buildSalesReport('month', monthKey);
+        await bot.sendMessage(chatId, reportMessage);
+      } catch (error) {
+        console.error('Erro no comando /relatorio_mes:', error);
+      }
+    });
+
+    bot.onText(/^\/(ajuda|help|start)(?:@[\w_]+)?\s*$/i, async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+
+        const helpMessage =
+          '🍔 *AutomaLanches — Central de Relatórios*\n\n' +
+          'Escolha um comando:\n' +
+          '• /relatorio → Abre botões de relatório (dia/mês)\n' +
+          '• /relatorio_dia → Relatório do dia atual\n' +
+          '• /relatorio_mes → Relatório do mês atual\n\n' +
+          '📌 *Período específico*\n' +
+          '• /relatorio_dia 2026-02-23\n' +
+          '• /relatorio_mes 2026-02\n\n' +
+          'Se quiser, também posso te enviar o relatório automaticamente no fechamento ✅';
+
+        await bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
+      } catch (error) {
+        console.error('Erro no comando /ajuda:', error);
+      }
+    });
   } catch (error) {
     console.error('⚠️ Erro ao inicializar Telegram Bot:', error.message);
     console.log('⚠️ Servidor continuará sem integração Telegram');
@@ -255,11 +387,14 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
   console.log('⚠️ Telegram não configurado (TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID ausentes)');
 }
 
+startClosingReportScheduler();
+
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');
 
 // Arquivo para armazenar dados dos pedidos (para callbacks)
 const ORDERS_DATA_FILE = path.join(__dirname, 'ordersData.json');
+const REPORT_STATE_FILE = path.join(__dirname, 'reportState.json');
 
 // Função para carregar dados dos pedidos
 function loadOrdersData() {
@@ -275,19 +410,274 @@ function loadOrdersData() {
 }
 
 // Função para salvar dados do pedido
-function saveOrderData(orderNumber, whatsappSanitized, clientName, items = []) {
+function saveOrderData(orderNumber, whatsappSanitized, clientName, items = [], metadata = {}) {
   try {
     const ordersData = loadOrdersData();
     ordersData[orderNumber] = {
       whatsapp: whatsappSanitized,
       name: clientName,
       items: items,
+      paymentMethod: metadata.paymentMethod || null,
+      total: Number.isFinite(Number(metadata.total)) ? Number(metadata.total) : null,
+      deliveryType: metadata.deliveryType || null,
       timestamp: new Date().toISOString()
     };
     fs.writeFileSync(ORDERS_DATA_FILE, JSON.stringify(ordersData, null, 2));
   } catch (error) {
     console.error('Erro ao salvar dados do pedido:', error);
   }
+}
+
+function loadReportState() {
+  try {
+    if (fs.existsSync(REPORT_STATE_FILE)) {
+      const data = fs.readFileSync(REPORT_STATE_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar estado de relatório:', error);
+  }
+
+  return {
+    lastClosingReportKey: null,
+    lastMinuteChecked: null
+  };
+}
+
+function saveReportState(state) {
+  try {
+    fs.writeFileSync(REPORT_STATE_FILE, JSON.stringify(state, null, 2));
+  } catch (error) {
+    console.error('Erro ao salvar estado de relatório:', error);
+  }
+}
+
+function getDatePartsByTimezone(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find(part => part.type === 'year')?.value || 0);
+  const month = Number(parts.find(part => part.type === 'month')?.value || 0);
+  const day = Number(parts.find(part => part.type === 'day')?.value || 0);
+
+  return {
+    year,
+    month,
+    day,
+    dateKey: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    monthKey: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}`
+  };
+}
+
+function normalizePaymentMethod(paymentMethod) {
+  const map = {
+    pix: 'Pix',
+    dinheiro: 'Dinheiro',
+    cartao: 'Cartão',
+    cartão: 'Cartão'
+  };
+
+  return map[String(paymentMethod || '').toLowerCase()] || 'Não informado';
+}
+
+function calculateOrderTotal(orderData) {
+  const numericTotal = Number(orderData?.total);
+  if (Number.isFinite(numericTotal)) {
+    return numericTotal;
+  }
+
+  if (!Array.isArray(orderData?.items)) {
+    return 0;
+  }
+
+  return orderData.items.reduce((sum, item) => {
+    const price = Number(item?.price) || 0;
+    const quantity = Number(item?.quantity) || 0;
+    return sum + (price * quantity);
+  }, 0);
+}
+
+function formatCurrency(value) {
+  return (Number(value) || 0).toFixed(2).replace('.', ',');
+}
+
+function buildSalesReport(reportType, periodKey = null) {
+  const ordersData = loadOrdersData();
+  const orders = Object.values(ordersData || {});
+  const nowInfo = getZonedDateParts(BUSINESS_TIMEZONE);
+  const effectivePeriodKey = periodKey || (reportType === 'month' ? nowInfo.monthKey : nowInfo.dateKey);
+
+  const filteredOrders = orders.filter((order) => {
+    if (!order?.timestamp) {
+      return false;
+    }
+
+    const parsedDate = new Date(order.timestamp);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return false;
+    }
+
+    const orderDateInfo = getDatePartsByTimezone(parsedDate, BUSINESS_TIMEZONE);
+
+    if (reportType === 'month') {
+      return orderDateInfo.monthKey === effectivePeriodKey;
+    }
+
+    return orderDateInfo.dateKey === effectivePeriodKey;
+  });
+
+  if (filteredOrders.length === 0) {
+    const periodLabel = reportType === 'month'
+      ? `mês ${effectivePeriodKey}`
+      : `dia ${effectivePeriodKey.split('-').reverse().join('/')}`;
+
+    return (
+      `🍔 AutomaLanches | Relatório de ${reportType === 'month' ? 'Mês' : 'Dia'}\n` +
+      `📅 Período: ${periodLabel}\n\n` +
+      `📭 Sem pedidos registrados neste período.`
+    );
+  }
+
+  let totalSales = 0;
+  const paymentCount = {};
+  const itemsCount = {};
+
+  for (const order of filteredOrders) {
+    totalSales += calculateOrderTotal(order);
+
+    const paymentLabel = normalizePaymentMethod(order?.paymentMethod);
+    paymentCount[paymentLabel] = (paymentCount[paymentLabel] || 0) + 1;
+
+    if (Array.isArray(order?.items)) {
+      for (const item of order.items) {
+        const itemName = item?.name || 'Item sem nome';
+        const quantity = Number(item?.quantity) || 0;
+
+        if (quantity > 0) {
+          itemsCount[itemName] = (itemsCount[itemName] || 0) + quantity;
+        }
+      }
+    }
+  }
+
+  const ordersCount = filteredOrders.length;
+  const averageTicket = ordersCount > 0 ? totalSales / ordersCount : 0;
+
+  const rankedItems = Object.entries(itemsCount)
+    .sort((a, b) => b[1] - a[1]);
+
+  const mostSoldItems = rankedItems.slice(0, 3);
+  const leastSoldItems = [...rankedItems].reverse().slice(0, 3);
+
+  const rankedPayments = Object.entries(paymentCount)
+    .sort((a, b) => b[1] - a[1]);
+
+  const topPayment = rankedPayments[0] || ['Não informado', 0];
+
+  const periodLabel = reportType === 'month'
+    ? effectivePeriodKey
+    : effectivePeriodKey.split('-').reverse().join('/');
+
+  const mostSoldText = mostSoldItems.length > 0
+    ? mostSoldItems.map(([name, qty]) => `• ${name}: ${qty}x`).join('\n')
+    : '• Sem itens vendidos';
+
+  const leastSoldText = leastSoldItems.length > 0
+    ? leastSoldItems.map(([name, qty]) => `• ${name}: ${qty}x`).join('\n')
+    : '• Sem itens vendidos';
+
+  const paymentBreakdownText = rankedPayments.length > 0
+    ? rankedPayments.map(([name, qty]) => `• ${name}: ${qty} pedido(s)`).join('\n')
+    : '• Não informado';
+
+  return (
+    `🍔 AutomaLanches | Relatório de ${reportType === 'month' ? 'Mês' : 'Dia'}\n` +
+    `📅 Período: ${periodLabel}\n\n` +
+    `💰 Total de vendas: R$ ${formatCurrency(totalSales)}\n` +
+    `🧾 Total de pedidos: ${ordersCount}\n` +
+    `🎯 Ticket médio: R$ ${formatCurrency(averageTicket)}\n\n` +
+    `🔥 Itens que mais saíram:\n${mostSoldText}\n\n` +
+    `📉 Itens que menos saíram:\n${leastSoldText}\n\n` +
+    `💳 Forma de pagamento mais escolhida: ${topPayment[0]} (${topPayment[1]} pedido(s))\n\n` +
+    `📌 Resumo por pagamento:\n${paymentBreakdownText}`
+  );
+}
+
+async function sendClosingReportPrompt() {
+  if (!bot || !CHAT_ID) {
+    return;
+  }
+
+  const nowInfo = getZonedDateParts(BUSINESS_TIMEZONE);
+  const todayWindow = BUSINESS_SCHEDULE[nowInfo.weekday];
+
+  if (!todayWindow) {
+    return;
+  }
+
+  const closeMinutes = toMinutes(todayWindow.close);
+
+  if (nowInfo.currentMinutes !== closeMinutes) {
+    return;
+  }
+
+  const state = loadReportState();
+
+  if (state.lastMinuteChecked === nowInfo.minuteKey) {
+    return;
+  }
+
+  state.lastMinuteChecked = nowInfo.minuteKey;
+
+  const closingKey = `${nowInfo.dateKey}_${todayWindow.close}`;
+  if (state.lastClosingReportKey === closingKey) {
+    saveReportState(state);
+    return;
+  }
+
+  await bot.sendMessage(CHAT_ID, '📊 Relatório de fechamento disponível. Escolha uma opção:', {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '📅 Relatório do dia',
+            callback_data: `report_day_${nowInfo.dateKey}`
+          }
+        ],
+        [
+          {
+            text: '🗓️ Relatório do mês',
+            callback_data: `report_month_${nowInfo.monthKey}`
+          }
+        ]
+      ]
+    }
+  });
+
+  state.lastClosingReportKey = closingKey;
+  saveReportState(state);
+}
+
+function startClosingReportScheduler() {
+  if (!bot || !CHAT_ID) {
+    return;
+  }
+
+  setInterval(() => {
+    sendClosingReportPrompt().catch((error) => {
+      console.error('Erro ao enviar prompt de relatório de fechamento:', error);
+    });
+  }, REPORT_CHECK_INTERVAL_MS);
+
+  console.log('🕒 Agendador de relatório de fechamento iniciado');
 }
 
 // Função para formatar data/hora com timezone correto
@@ -603,7 +993,11 @@ app.post('/api/send-order', async (req, res) => {
     });
     
     // Salvar dados do pedido para uso no callback_query (incluindo itens para repetição)
-    saveOrderData(orderNumber, whatsappSanitized, name, items);
+    saveOrderData(orderNumber, whatsappSanitized, name, items, {
+      paymentMethod,
+      total,
+      deliveryType
+    });
     
     res.json({ 
       success: true, 
