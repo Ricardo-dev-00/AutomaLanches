@@ -297,7 +297,8 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
 
     const sendReportMenu = async (chatId) => {
       const nowInfo = getZonedDateParts(BUSINESS_TIMEZONE);
-      await bot.sendMessage(chatId, '📊 Relatórios de vendas\n\nAcompanhe o desempenho da sua lanchonete com relatórios completos de vendas.\n\nEscolha abaixo qual relatório deseja visualizar:\n* 📅 Vendas de hoje\n* 📆 Vendas do mês', {
+      await bot.sendMessage(chatId, '📊 *Relatórios de vendas*\n\nAcompanhe o desempenho da sua lanchonete com relatórios completos de vendas.\n\nEscolha abaixo qual relatório deseja visualizar:', {
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
             [
