@@ -297,7 +297,7 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
 
     const sendReportMenu = async (chatId) => {
       const nowInfo = getZonedDateParts(BUSINESS_TIMEZONE);
-      await bot.sendMessage(chatId, '📊 Relatório', {
+      await bot.sendMessage(chatId, '📊 Relatórios de vendas\n\nAcompanhe o desempenho da sua lanchonete com relatórios completos de vendas.\n\nEscolha abaixo qual relatório deseja visualizar:\n* 📅 Vendas de hoje\n* 📆 Vendas do mês', {
         reply_markup: {
           inline_keyboard: [
             [
@@ -423,6 +423,7 @@ function saveOrderData(orderNumber, whatsappSanitized, clientName, items = [], m
       paymentMethod: metadata.paymentMethod || null,
       total: Number.isFinite(Number(metadata.total)) ? Number(metadata.total) : null,
       deliveryType: metadata.deliveryType || null,
+      neighborhood: metadata.neighborhood || null,
       timestamp: new Date().toISOString()
     };
     fs.writeFileSync(ORDERS_DATA_FILE, JSON.stringify(ordersData, null, 2));
@@ -512,6 +513,26 @@ function formatCurrency(value) {
   return (Number(value) || 0).toFixed(2).replace('.', ',');
 }
 
+function formatMonthTitle(monthKey) {
+  const [year, month] = String(monthKey).split('-').map(Number);
+  if (!year || !month) {
+    return monthKey;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  const monthName = new Intl.DateTimeFormat('pt-BR', {
+    month: 'long',
+    timeZone: 'UTC'
+  }).format(date);
+
+  return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${year}`;
+}
+
+function formatHourRange(startHour) {
+  const endHour = (startHour + 2) % 24;
+  return `${String(startHour).padStart(2, '0')}h–${String(endHour).padStart(2, '0')}h`;
+}
+
 function buildSalesReport(reportType, periodKey = null) {
   const ordersData = loadOrdersData();
   const orders = Object.values(ordersData || {});
@@ -537,27 +558,71 @@ function buildSalesReport(reportType, periodKey = null) {
     return orderDateInfo.dateKey === effectivePeriodKey;
   });
 
-  if (filteredOrders.length === 0) {
-    const periodLabel = reportType === 'month'
-      ? `mês ${effectivePeriodKey}`
-      : `dia ${effectivePeriodKey.split('-').reverse().join('/')}`;
-
-    return (
-      `🍔 AutomaLanches | Relatório de ${reportType === 'month' ? 'Mês' : 'Dia'}\n` +
-      `📅 Período: ${periodLabel}\n\n` +
-      `📭 Sem pedidos registrados neste período.`
-    );
-  }
-
   let totalSales = 0;
-  const paymentCount = {};
+  let ordersCount = 0;
+  let canceledOrders = 0;
+
   const itemsCount = {};
+  const neighborhoodsCount = {};
+  const paymentTotals = {
+    pix: 0,
+    cartao: 0,
+    dinheiro: 0
+  };
+  const deliveryStats = {
+    count: 0,
+    total: 0
+  };
+  const pickupStats = {
+    count: 0,
+    total: 0
+  };
+  const hourCounts = {};
 
   for (const order of filteredOrders) {
-    totalSales += calculateOrderTotal(order);
+    const isCanceled = order?.status === 'cancelado' || order?.status === 'cancelled' || order?.cancelled === true;
+    if (isCanceled) {
+      canceledOrders += 1;
+      continue;
+    }
 
-    const paymentLabel = normalizePaymentMethod(order?.paymentMethod);
-    paymentCount[paymentLabel] = (paymentCount[paymentLabel] || 0) + 1;
+    const orderTotal = calculateOrderTotal(order);
+    totalSales += orderTotal;
+    ordersCount += 1;
+
+    const paymentKey = String(order?.paymentMethod || '').toLowerCase();
+    if (paymentKey in paymentTotals) {
+      paymentTotals[paymentKey] += orderTotal;
+    }
+
+    const deliveryType = String(order?.deliveryType || '').toLowerCase();
+    if (deliveryType === 'delivery') {
+      deliveryStats.count += 1;
+      deliveryStats.total += orderTotal;
+    } else {
+      pickupStats.count += 1;
+      pickupStats.total += orderTotal;
+    }
+
+    const neighborhood = String(order?.neighborhood || '').trim();
+    if (neighborhood) {
+      neighborhoodsCount[neighborhood] = (neighborhoodsCount[neighborhood] || 0) + 1;
+    }
+
+    if (order?.timestamp) {
+      const parsedDate = new Date(order.timestamp);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        const formatter = new Intl.DateTimeFormat('pt-BR', {
+          timeZone: BUSINESS_TIMEZONE,
+          hour: '2-digit',
+          hour12: false
+        });
+        const hour = Number(formatter.format(parsedDate));
+        if (!Number.isNaN(hour)) {
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      }
+    }
 
     if (Array.isArray(order?.items)) {
       for (const item of order.items) {
@@ -571,46 +636,66 @@ function buildSalesReport(reportType, periodKey = null) {
     }
   }
 
-  const ordersCount = filteredOrders.length;
   const averageTicket = ordersCount > 0 ? totalSales / ordersCount : 0;
 
   const rankedItems = Object.entries(itemsCount)
     .sort((a, b) => b[1] - a[1]);
 
-  const mostSoldItems = rankedItems.slice(0, 3);
-  const leastSoldItems = [...rankedItems].reverse().slice(0, 3);
+  const mostSoldItems = rankedItems.slice(0, 2);
 
-  const rankedPayments = Object.entries(paymentCount)
-    .sort((a, b) => b[1] - a[1]);
-
-  const topPayment = rankedPayments[0] || ['Não informado', 0];
-
-  const periodLabel = reportType === 'month'
-    ? effectivePeriodKey
-    : effectivePeriodKey.split('-').reverse().join('/');
+  const rankedNeighborhoods = Object.entries(neighborhoodsCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
   const mostSoldText = mostSoldItems.length > 0
-    ? mostSoldItems.map(([name, qty]) => `• ${name}: ${qty}x`).join('\n')
-    : '• Sem itens vendidos';
+    ? mostSoldItems.map(([name, qty]) => `${name} — ${qty} unidades`).join('\n')
+    : 'Sem produtos vendidos no período';
 
-  const leastSoldText = leastSoldItems.length > 0
-    ? leastSoldItems.map(([name, qty]) => `• ${name}: ${qty}x`).join('\n')
-    : '• Sem itens vendidos';
+  const topNeighborhoodsText = rankedNeighborhoods.length > 0
+    ? rankedNeighborhoods.map(([name, qty]) => `${name} — ${qty} pedidos`).join('\n')
+    : 'Sem bairros registrados no período';
 
-  const paymentBreakdownText = rankedPayments.length > 0
-    ? rankedPayments.map(([name, qty]) => `• ${name}: ${qty} pedido(s)`).join('\n')
-    : '• Não informado';
+  let peakHourRange = 'Sem dados';
+  const hourEntries = Object.entries(hourCounts).map(([hour, count]) => [Number(hour), count]);
+  if (hourEntries.length > 0) {
+    let bestStart = hourEntries[0][0];
+    let bestValue = -1;
+
+    for (let startHour = 0; startHour < 24; startHour += 1) {
+      const windowCount = (hourCounts[startHour] || 0) + (hourCounts[(startHour + 1) % 24] || 0);
+      if (windowCount > bestValue) {
+        bestValue = windowCount;
+        bestStart = startHour;
+      }
+    }
+
+    peakHourRange = formatHourRange(bestStart);
+  }
+
+  const title = reportType === 'day'
+    ? `📊 RELATÓRIO DE VENDAS — ${effectivePeriodKey.split('-').reverse().join('/')}`
+    : `📊 RELATÓRIO DE VENDAS — ${formatMonthTitle(effectivePeriodKey)}`;
 
   return (
-    `🍔 AutomaLanches | Relatório de ${reportType === 'month' ? 'Mês' : 'Dia'}\n` +
-    `📅 Período: ${periodLabel}\n\n` +
-    `💰 Total de vendas: R$ ${formatCurrency(totalSales)}\n` +
-    `🧾 Total de pedidos: ${ordersCount}\n` +
-    `🎯 Ticket médio: R$ ${formatCurrency(averageTicket)}\n\n` +
-    `🔥 Itens que mais saíram:\n${mostSoldText}\n\n` +
-    `📉 Itens que menos saíram:\n${leastSoldText}\n\n` +
-    `💳 Forma de pagamento mais escolhida: ${topPayment[0]} (${topPayment[1]} pedido(s))\n\n` +
-    `📌 Resumo por pagamento:\n${paymentBreakdownText}`
+    `${title}\n\n` +
+    `💰 RESUMO\n` +
+    `Total vendido: R$ ${formatCurrency(totalSales)}\n` +
+    `Pedidos: ${ordersCount}\n` +
+    `Ticket médio: R$ ${formatCurrency(averageTicket)}\n\n` +
+    `🛵 DELIVERY\n` +
+    `${deliveryStats.count} pedidos — R$ ${formatCurrency(deliveryStats.total)}\n\n` +
+    `🏪 RETIRADA\n` +
+    `${pickupStats.count} pedidos — R$ ${formatCurrency(pickupStats.total)}\n\n` +
+    `💳 PAGAMENTOS\n` +
+    `Pix: R$ ${formatCurrency(paymentTotals.pix)}\n` +
+    `Cartão: R$ ${formatCurrency(paymentTotals.cartao)}\n` +
+    `Dinheiro: R$ ${formatCurrency(paymentTotals.dinheiro)}\n\n` +
+    `🏆 PRODUTOS MAIS VENDIDOS\n` +
+    `${mostSoldText}\n\n` +
+    `📍 BAIRROS COM MAIS PEDIDOS\n` +
+    `${topNeighborhoodsText}\n\n` +
+    `⏰ Horário de pico: ${peakHourRange}\n` +
+    `❌ Cancelados: ${canceledOrders} pedidos`
   );
 }
 
@@ -999,7 +1084,8 @@ app.post('/api/send-order', async (req, res) => {
     saveOrderData(orderNumber, whatsappSanitized, name, items, {
       paymentMethod,
       total,
-      deliveryType
+      deliveryType,
+      neighborhood
     });
     
     res.json({ 
