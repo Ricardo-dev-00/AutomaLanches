@@ -325,7 +325,10 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         }
 
         const commandToken = text.split(/\s+/)[0].toLowerCase();
-        const normalizedCommand = commandToken.split('@')[0];
+        const normalizedCommand = commandToken
+          .split('@')[0]
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
 
         if (normalizedCommand === '/relatorio') {
           await sendReportMenu(msg.chat.id);
@@ -366,13 +369,12 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
         const helpMessage =
           '🍔 *AutomaLanches — Central de Relatórios*\n\n' +
           'Escolha um comando:\n' +
-          '• /relatorio → Abre botões de relatório (dia/mês)\n' +
+          '• /relatorio (ou /relatório) → Abre botões de relatório (dia/mês)\n' +
           '• /relatorio_dia → Relatório do dia atual\n' +
           '• /relatorio_mes → Relatório do mês atual\n\n' +
           '📌 *Período específico*\n' +
           '• /relatorio_dia 2026-02-23\n' +
-          '• /relatorio_mes 2026-02\n\n' +
-          'Se quiser, também posso te enviar o relatório automaticamente no fechamento ✅';
+          '• /relatorio_mes 2026-02';
 
         await bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
       } catch (error) {
@@ -387,7 +389,8 @@ if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
   console.log('⚠️ Telegram não configurado (TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID ausentes)');
 }
 
-startClosingReportScheduler();
+// Envio automático de relatório de fechamento desativado por opção de negócio.
+// O acesso aos relatórios permanece apenas via comandos no Telegram.
 
 // Arquivo para armazenar o contador de pedidos
 const ORDER_COUNTER_FILE = path.join(__dirname, 'orderCounter.json');

@@ -44,14 +44,11 @@ TELEGRAM_CHAT_ID=987654321
 2. Faça um pedido pelo sistema
 3. Verifique se a mensagem chegou no Telegram
 
-## Relatório automático de fechamento
+## Relatórios no Telegram (manual)
 
-No horário de fechamento da lanchonete, o sistema envia automaticamente no Telegram uma mensagem de relatório com botões:
+Os relatórios são enviados sob demanda, quando você digita comandos no Telegram.
 
-- **📅 Relatório do dia**
-- **🗓️ Relatório do mês**
-
-Ao clicar, o bot retorna um resumo com:
+O bot retorna um resumo com:
 
 - Total de vendas
 - Total de pedidos
@@ -64,10 +61,10 @@ Ao clicar, o bot retorna um resumo com:
 
 ## Comandos manuais de relatório
 
-Você também pode solicitar relatório a qualquer momento no Telegram:
+Você pode solicitar relatório a qualquer momento no Telegram:
 
 - `/ajuda` → mostra os comandos disponíveis
-- `/relatorio` → abre botões de relatório do dia e do mês
+- `/relatorio` ou `/relatório` → abre botões de relatório do dia e do mês
 - `/relatorio_dia` → envia relatório do dia atual
 - `/relatorio_mes` → envia relatório do mês atual
 
